@@ -1,4 +1,4 @@
-[Tool] Auto Translation Generator for C# projects – extract & translate GetTranslation strings into 90+ languages
+## [Tool] Auto Translation Generator for C# projects – extract & translate GetTranslation strings into 90+ languages
 
 
 Hi everyone,

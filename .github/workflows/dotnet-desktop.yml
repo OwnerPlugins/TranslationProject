@@ -20,9 +20,8 @@ jobs:
       with:
         dotnet-version: '10.0.x' # La versione del tuo progetto
 
-    # Questo è il passaggio cruciale: generare l'eseguibile .exe
     - name: Pubblica l'app (self-contained)
-      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -o publish
+      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o publish
 
     # Ora carica l'eseguibile e tutti i file necessari come artefatto
     - name: Carica gli artefatti di build

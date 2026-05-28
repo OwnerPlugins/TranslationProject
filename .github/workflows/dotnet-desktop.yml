@@ -1,17 +1,9 @@
-name: Build and Publish .NET App
+name: Build per release manuale
 
 on:
   push:
     branches: [ "main" ]
-    tags:
-      - 'v*'                   # Attiva il job release quando fai push di un tag tipo v1.0.0
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
-
-permissions:
-  contents: read
-  actions: write
 
 jobs:
   build:
@@ -26,48 +18,11 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Pubblica l'app
-      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
+    - name: Pubblica l'app (self‑contained, single file)
+      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish_exe --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
 
-    - name: Debug - Elenca file
-      run: Get-ChildItem ./publish -Recurse
-
-    - name: Carica l'artefatto (per debug)
+    - name: Carica l'artefatto
       uses: actions/upload-artifact@v4
       with:
         name: TranslationProject-Release
-        path: ./publish/
-        if-no-files-found: error
-
-    - name: Crea zip con l'exe
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        Compress-Archive -Path ./publish/TranslationProject.exe -DestinationPath ./TranslationProject.zip
-    
-    - name: Crea Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ./TranslationProject.zip
-        name: Release ${{ github.ref_name }}
-        body: |
-          ## TranslationProject
-          Scarica TranslationProject.zip ed estrai l'exe.
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Crea Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ./publish/TranslationProject.exe   # solo l'exe, non tutta la cartella
-        name: Release ${{ github.ref_name }}
-        body: |
-          ## TranslationProject
-          Scarica TranslationProject.exe ed eseguilo.
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: ./publish_exe/

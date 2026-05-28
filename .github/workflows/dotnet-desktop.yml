@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch: # Permette l'esecuzione manuale dalla UI di GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,14 +18,13 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x' # La versione del tuo progetto
+        dotnet-version: '10.0.x'
 
-    - name: Pubblica l'app (self-contained)
-      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+    - name: Pubblica l'app
+      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 
-    # Ora carica l'eseguibile e tutti i file necessari come artefatto
-    - name: Carica gli artefatti di build
+    - name: Carica l'artefatto
       uses: actions/upload-artifact@v4
       with:
         name: TranslationProject-Release
-        path: publish/
+        path: ./publish/

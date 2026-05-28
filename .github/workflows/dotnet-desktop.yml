@@ -1,4 +1,4 @@
-name: Build per release manuale
+name: Build e Crea Artefatto
 
 on:
   push:

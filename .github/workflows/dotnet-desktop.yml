@@ -25,9 +25,11 @@ jobs:
     - name: Build the project
       run: dotnet build TranslationProject.csproj --configuration Release
 
-    # (Opzionale) Carica l'eseguibile compilato come artefatto
+    - name: Publish the app (self-contained)
+      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -o publish
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: TranslationProject-Release
-        path: bin/Release/net10.0-windows/ # Modifica il percorso se necessario
+        path: bin/Release/net10.0-windows/

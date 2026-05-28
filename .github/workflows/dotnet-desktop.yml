@@ -1,28 +1,44 @@
-name: Build per release manuale
+name: Build e commit exe nel repo
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # Necessario per pushare i file
+
 jobs:
-  build:
+  build-and-commit:
     runs-on: windows-latest
 
     steps:
     - name: Checkout del codice
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # Per avere lo storico completo per il commit
 
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
 
-    - name: Pubblica l'app (self‑contained, single file)
+    - name: Pubblica l'app (self-contained, single file)
       run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish_exe --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
 
-    - name: Carica l'artefatto
-      uses: actions/upload-artifact@v4
-      with:
-        name: TranslationProject-Release
-        path: ./publish_exe/
+    - name: Rimuovi eventuale cartella vecchia dal repo
+      run: |
+        if (Test-Path .publish_exe) { Remove-Item -Recurse -Force .publish_exe }
+        # Sposta la cartella appena creata nella root del repo
+        Move-Item ./publish_exe ./.publish_exe
+
+    - name: Configura git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Aggiungi e committa la cartella .publish_exe
+      run: |
+        git add .publish_exe
+        git commit -m "Aggiorna build - ${{ github.run_number }}" || echo "Nessuna modifica da committare"
+        git push origin HEAD:main

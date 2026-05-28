@@ -3,6 +3,8 @@ name: Build and Publish .NET App
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*'                   # Attiva il job release quando fai push di un tag tipo v1.0.0
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -24,15 +26,30 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Pubblica l'app (warning soppressi)
+    - name: Pubblica l'app
       run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
 
     - name: Debug - Elenca file
       run: Get-ChildItem ./publish -Recurse
 
-    - name: Carica l'artefatto
+    - name: Carica l'artefatto (per debug)
       uses: actions/upload-artifact@v4
       with:
         name: TranslationProject-Release
         path: ./publish/
         if-no-files-found: error
+
+    # Questo step crea la Release su GitHub
+    - name: Crea Release
+      if: startsWith(github.ref, 'refs/tags/')   # Esegue solo se il push è un tag
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ./publish/TranslationProject.exe
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## Traduzione automatica dei moduli del progetto
+          Scarica TranslationProject.exe ed eseguilo.
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -39,15 +39,14 @@ jobs:
         path: ./publish/
         if-no-files-found: error
 
-    # Questo step crea la Release su GitHub
     - name: Crea Release
-      if: startsWith(github.ref, 'refs/tags/')   # Esegue solo se il push è un tag
+      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: ./publish/TranslationProject.exe
+        files: ./publish/TranslationProject.exe   # solo l'exe, non tutta la cartella
         name: Release ${{ github.ref_name }}
         body: |
-          ## Traduzione automatica dei moduli del progetto
+          ## TranslationProject
           Scarica TranslationProject.exe ed eseguilo.
         draft: false
         prerelease: false

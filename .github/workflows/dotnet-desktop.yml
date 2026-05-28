@@ -7,6 +7,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Permessi necessari per l'upload degli artefatti
+permissions:
+  contents: read
+  actions: write  # Permesso fondamentale per caricare artefatti
+
 jobs:
   build:
     runs-on: windows-latest
@@ -20,21 +25,24 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
+    # Il flag --no-build evita di ricompilare, --nologo e -clp:NoSummary riducono il log
     - name: Pubblica l'app (single file)
-      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
+      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish --no-build --nologo -clp:NoSummary
+
+    # Pulisce la cartella di output da file superflui come .pdb (simboli di debug) e .json di configurazione
+    - name: Pulisci la cartella di output
+      run: |
+        Remove-Item -Path ./publish/*.pdb -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path ./publish/*.json -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path ./publish/*.config -Force -ErrorAction SilentlyContinue
 
     - name: Debug - Elenca file nella cartella publish
-      run: |
-        if (Test-Path ./publish) {
-          Write-Host "Contenuto di ./publish:"
-          Get-ChildItem ./publish -Recurse
-        } else {
-          Write-Host "Cartella ./publish non trovata!"
-          exit 1
-        }
+      run: Get-ChildItem ./publish -Recurse | Select-Object FullName, Length
 
     - name: Carica l'artefatto
       uses: actions/upload-artifact@v4
       with:
         name: TranslationProject-Release
         path: ./publish/
+        # Impedisce l'upload se la cartella è vuota e sopprime i warning
+        if-no-files-found: error

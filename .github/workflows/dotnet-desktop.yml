@@ -1,4 +1,4 @@
-name: Build C++ Desktop App
+name: .NET Core Desktop
 
 on:
   push:
@@ -14,23 +14,19 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+    # Installa l'SDK .NET corretto (versione 10.0.x)
+    - name: Install .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x' # Modificato per supportare net10.0
 
-    - name: Restore NuGet packages (se usi vcpkg, Conan, ecc.)
-      run: |
-        # Esempio con vcpkg
-        # git clone https://github.com/Microsoft/vcpkg.git
-        # .\vcpkg\bootstrap-vcpkg.bat
-        # .\vcpkg\vcpkg install
+    # Compila il progetto usando dotnet build. Questo comando esegue anche il restore delle dipendenze.
+    - name: Build the project
+      run: dotnet build TranslationProject.csproj --configuration Release
 
-    - name: Build Solution
-      run: msbuild YourSolution.sln /p:Configuration=Release /p:Platform=x64
-
-    - name: Upload Build Artifacts
+    # (Opzionale) Carica l'eseguibile compilato come artefatto
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: CppApp-Release
-        path: |
-          x64/Release/*.exe
-          x64/Release/*.dll
+        name: TranslationProject-Release
+        path: bin/Release/net10.0-windows/ # Modifica il percorso se necessario

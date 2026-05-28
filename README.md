@@ -1,5 +1,13 @@
 ## [Tool] Auto Translation Generator for C# projects – extract & translate GetTranslation strings into 90+ languages
 
+<p align="center">
+  <a href="https://github.com/TranslationProject/TranslationProject">
+    <img src="https://img.shields.io/badge/Version-1.0-blue.svg" alt="Version">
+  </a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
+  </a>
+</p>
 
 Hi everyone,
 I needed a tool that could extract all the strings to translate from the C# files and create the appropriate language files.

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -8,87 +8,79 @@ namespace TranslationProject
     public class LanguageSelectorForm : Form
     {
         private CheckedListBox clbLanguages;
-        private Button btnSelectAll;
-        private Button btnUnselectAll;
-        private Button btnOK;
-        private Button btnCancel;
-
-        public Dictionary<string, string> SelectedLanguages { get; private set; }
-
+        private Button btnSelectAll, btnUnselectAll, btnOK, btnCancel;
         private readonly Dictionary<string, string> _allLanguages;
-        private readonly Dictionary<string, string> _initialSelection;
+        private Dictionary<string, string> _selectedLanguages;
 
-        public LanguageSelectorForm(Dictionary<string, string> allLanguages, Dictionary<string, string> initialSelection)
-        {
-            _allLanguages = allLanguages;
-            _initialSelection = initialSelection;
-            SelectedLanguages = new Dictionary<string, string>(initialSelection);
-            InitializeComponent();
-            LoadLanguages();
-        }
+        public Dictionary<string, string> SelectedLanguages => _selectedLanguages;
 
-        private void InitializeComponent()
+        public LanguageSelectorForm(Dictionary<string, string> allLanguages, Dictionary<string, string> selectedLanguages)
         {
-            this.Size = new System.Drawing.Size(400, 500);
-            this.StartPosition = FormStartPosition.CenterParent;
+            _allLanguages = allLanguages ?? new Dictionary<string, string>();
+            _selectedLanguages = new Dictionary<string, string>(selectedLanguages ?? _allLanguages);
+
             this.Text = "Select Languages";
+            this.Size = new System.Drawing.Size(350, 500);
+            this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
 
-            clbLanguages = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true };
-            btnSelectAll = new Button { Text = "Select All", Width = 100, Height = 30 };
-            btnUnselectAll = new Button { Text = "Unselect All", Width = 100, Height = 30 };
-            btnOK = new Button { Text = "OK", Width = 80, Height = 30, DialogResult = DialogResult.OK };
-            btnCancel = new Button { Text = "Cancel", Width = 80, Height = 30, DialogResult = DialogResult.Cancel };
-
-            var panelButtons = new TableLayoutPanel
+            clbLanguages = new CheckedListBox
             {
-                Dock = DockStyle.Bottom,
-                Height = 40,
-                ColumnCount = 4,
-                RowCount = 1
+                Location = new System.Drawing.Point(12, 12),
+                Size = new System.Drawing.Size(310, 400),
+                CheckOnClick = true,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
-            panelButtons.Controls.Add(btnSelectAll, 0, 0);
-            panelButtons.Controls.Add(btnUnselectAll, 1, 0);
-            panelButtons.Controls.Add(btnOK, 2, 0);
-            panelButtons.Controls.Add(btnCancel, 3, 0);
 
+            btnSelectAll = new Button { Text = "Select All", Location = new System.Drawing.Point(12, 420), Size = new System.Drawing.Size(90, 30) };
             btnSelectAll.Click += (s, e) => { for (int i = 0; i < clbLanguages.Items.Count; i++) clbLanguages.SetItemChecked(i, true); };
+
+            btnUnselectAll = new Button { Text = "Unselect All", Location = new System.Drawing.Point(108, 420), Size = new System.Drawing.Size(90, 30) };
             btnUnselectAll.Click += (s, e) => { for (int i = 0; i < clbLanguages.Items.Count; i++) clbLanguages.SetItemChecked(i, false); };
+
+            btnOK = new Button { Text = "OK", Location = new System.Drawing.Point(204, 420), Size = new System.Drawing.Size(55, 30), DialogResult = DialogResult.OK };
             btnOK.Click += (s, e) => ApplySelection();
 
-            this.Controls.Add(clbLanguages);
-            this.Controls.Add(panelButtons);
+            btnCancel = new Button { Text = "Cancel", Location = new System.Drawing.Point(265, 420), Size = new System.Drawing.Size(55, 30), DialogResult = DialogResult.Cancel };
+
+            this.Controls.AddRange(new Control[] { clbLanguages, btnSelectAll, btnUnselectAll, btnOK, btnCancel });
+            PopulateLanguages();
         }
 
-        private void LoadLanguages()
+        private void PopulateLanguages()
         {
             clbLanguages.Items.Clear();
-            foreach (var lang in _allLanguages.OrderBy(l => l.Value))
+            foreach (var kvp in _allLanguages.OrderBy(kvp => kvp.Value))
             {
-                int index = clbLanguages.Items.Add(new LanguageItem(lang.Key, lang.Value), false);
-                if (_initialSelection.ContainsKey(lang.Key))
+                int index = clbLanguages.Items.Add($"{kvp.Value} ({kvp.Key})");
+                if (_selectedLanguages.ContainsKey(kvp.Key))
                     clbLanguages.SetItemChecked(index, true);
             }
         }
 
         private void ApplySelection()
         {
-            var selected = new Dictionary<string, string>();
-            foreach (LanguageItem item in clbLanguages.CheckedItems)
+            _selectedLanguages.Clear();
+            foreach (var item in clbLanguages.CheckedItems)
             {
-                selected[item.Code] = item.Name;
+                string text = item.ToString();
+                int start = text.LastIndexOf('(');
+                int end = text.LastIndexOf(')');
+                if (start > 0 && end > start)
+                {
+                    string code = text.Substring(start + 1, end - start - 1);
+                    foreach (var kvp in _allLanguages)
+                    {
+                        if (kvp.Key.Equals(code, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _selectedLanguages[kvp.Key] = kvp.Value;
+                            break;
+                        }
+                    }
+                }
             }
-            SelectedLanguages = selected;
-        }
-
-        private class LanguageItem
-        {
-            public string Code { get; }
-            public string Name { get; }
-            public LanguageItem(string code, string name) { Code = code; Name = name; }
-            public override string ToString() => Name;
         }
     }
 }

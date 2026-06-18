@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -13,34 +13,31 @@ using Newtonsoft.Json.Linq;
 
 namespace TranslationProject
 {
-    public class Form1 : Form
+    public partial class Form1 : Form
     {
-        // -------------------- Controlli UI --------------------
-        private Label lblHeader;
-        private Label lblVersion;
-        private Label lblCredits;
-        private Label lblProject;
-        private TextBox txtProjectPath;
-        private Button btnBrowseProject;
-        private Label lblOutput;
-        private TextBox txtOutputPath;
-        private Button btnBrowseOutput;
-        private CheckBox chkUseOutput;
-        private Button btnSelectLanguages;
-        private Button btnStart;
-        private Button btnStop;
-        private ProgressBar progressBar;
-        private RichTextBox rtxtLog;
-
-        // -------------------- Logica di traduzione --------------------
+        // ================================================================
+        // PRIVATE FIELDS
+        // ================================================================
         private readonly HttpClient _httpClient = new HttpClient();
         private Dictionary<string, string> _cache = new Dictionary<string, string>();
         private string _cacheFile;
         private string _projectFolder;
         private string _outputFolder;
         private CancellationTokenSource _cts;
+        private CancellationTokenSource _ctsEnigma2;
+        private Enigma2TranslationManager _enigma2Manager;
+        private bool _useCache = true;
 
-        // Dizionario completo delle lingue (codice -> nome file)
+        private bool _isPluginFolderSelected = false;
+        private bool _isExtracted = false;
+        private bool _isTranslated = false;
+
+        // Monitor
+        private DateTime _operationStartTime;
+        private int _totalItems = 0;
+        private int _processedItems = 0;
+        private System.Windows.Forms.Timer _timer;
+
         private readonly Dictionary<string, string> _allLanguages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "af", "Afrikaans" }, { "am", "Amharic" }, { "ar", "Arabic" }, { "az", "Azerbaijani" },
@@ -68,87 +65,230 @@ namespace TranslationProject
             { "zh", "中国人" }, { "zh_CN", "简体中文" }, { "zh_HK", "Chinese_HK" }, { "zh_SG", "Chinese_SG" }, { "zh_TW", "Chinese_TW" }
         };
 
-        // Lingue selezionate (all'inizio tutte)
         private Dictionary<string, string> _selectedLanguages;
+        // ================================================================
+        // COSTRUTTORE
+        // ================================================================
+/*         public Form1()
+        {
+            _selectedLanguages = new Dictionary<string, string>(_allLanguages);
+            InitializeComponent();
+            _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
+            if (File.Exists("app.ico")) this.Icon = new Icon("app.ico");
+            try
+            {
+                string logoPath = Path.Combine(Application.StartupPath, "Google-AI.png");
+                MessageBox.Show($"Cerco logo in: {logoPath}");  // DEBUG
+                if (File.Exists(logoPath))
+                {
+                    picLogo.Image = Image.FromFile(logoPath);
+                    picLogo.SizeMode = PictureBoxSizeMode.Zoom;
+                    picLogo.BringToFront();   // portalo in primo piano
+                    MessageBox.Show("Logo caricato!");  // DEBUG
+                }
+                else
+                {
+                    picLogo.Visible = false;
+                    MessageBox.Show("File non trovato!");  // DEBUG
+                }
+            }
+            catch (Exception ex)
+            {
+                picLogo.Visible = false;
+                MessageBox.Show($"Errore: {ex.Message}");
+            }
+            CmbMode_SelectedIndexChanged(null, EventArgs.Empty);
+            ResetMonitor();
+            PopulateLanguages();
+            UpdateButtonsState();
+        } */
 
         public Form1()
         {
             _selectedLanguages = new Dictionary<string, string>(_allLanguages);
-            SetupUI();
-            btnStop.Enabled = false;
-            progressBar.Visible = false;
-            this.Text = "Translation Tool for VisualStudio Project - by Lululla";
+            InitializeComponent();
+
+            _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
             if (File.Exists("app.ico")) this.Icon = new Icon("app.ico");
-        }
-
-        private void SetupUI()
-        {
-            this.Size = new Size(750, 650);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = SystemColors.Control;
-            this.Font = new Font("Segoe UI", 9F);
-
-            lblHeader = new Label { Text = "Translation Tool for VisualStudio Project", Font = new Font("Segoe UI", 14F, FontStyle.Bold), Location = new Point(12, 9), AutoSize = true };
-            lblVersion = new Label { Text = "Version 1.1 - Extracts GetTranslation keys, auto-translates to selected languages, uses cache.", Location = new Point(15, 38), AutoSize = true, Font = new Font("Segoe UI", 9F, FontStyle.Italic) };
-            lblCredits = new Label { Text = "by Lululla © 2026 - Support: linuxsat-support.com", Location = new Point(15, 58), AutoSize = true };
-
-            lblProject = new Label { Text = "Project folder (contains .cs files):", Location = new Point(15, 90), AutoSize = true };
-            txtProjectPath = new TextBox { Location = new Point(18, 110), Size = new Size(500, 23) };
-            btnBrowseProject = new Button { Text = "Browse...", Location = new Point(530, 108), Size = new Size(80, 27) };
-            btnBrowseProject.Click += BtnBrowseProject_Click;
-
-            lblOutput = new Label { Text = "Output folder (optional):", Location = new Point(15, 145), AutoSize = true };
-            txtOutputPath = new TextBox { Location = new Point(18, 165), Size = new Size(500, 23), Enabled = false };
-            btnBrowseOutput = new Button { Text = "Browse...", Location = new Point(530, 163), Size = new Size(80, 27), Enabled = false };
-            btnBrowseOutput.Click += BtnBrowseOutput_Click;
-            chkUseOutput = new CheckBox { Text = "Use custom output folder", Location = new Point(18, 195), AutoSize = true };
-            chkUseOutput.CheckedChanged += ChkUseOutput_CheckedChanged;
-
-            btnSelectLanguages = new Button { Text = "Select Languages", Location = new Point(18, 230), Size = new Size(130, 30), BackColor = Color.LightBlue };
-            btnSelectLanguages.Click += BtnSelectLanguages_Click;
-
-            btnStart = new Button { Text = "Start Translation", Location = new Point(160, 230), Size = new Size(130, 30), BackColor = Color.LightGreen };
-            btnStart.Click += BtnStart_Click;
-
-            btnStop = new Button { Text = "Stop", Location = new Point(300, 230), Size = new Size(80, 30), BackColor = Color.LightCoral };
-            btnStop.Click += BtnStop_Click;
-
-            progressBar = new ProgressBar { Location = new Point(400, 235), Size = new Size(200, 20), Style = ProgressBarStyle.Marquee, Visible = false };
-            try { progressBar.ForeColor = Color.LimeGreen; } catch { }
-
-            rtxtLog = new RichTextBox
+            
+            try
             {
-                Location = new Point(18, 275),
-                Size = new Size(700, 330),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                BackColor = Color.Black,
-                ForeColor = Color.White,
-                ReadOnly = true
-            };
+                string logoPath = Path.Combine(Application.StartupPath, "Google-AI.png");
+                if (File.Exists(logoPath))
+                {
+                    picLogo.Image = Image.FromFile(logoPath);
+                    picLogo.SizeMode = PictureBoxSizeMode.Zoom;
+                }
+                else
+                    picLogo.Visible = false;
+            }
+            catch
+            {
+                picLogo.Visible = false;
+            }
 
-            this.Controls.AddRange(new Control[] { lblHeader, lblVersion, lblCredits, lblProject, txtProjectPath, btnBrowseProject,
-                lblOutput, txtOutputPath, btnBrowseOutput, chkUseOutput, btnSelectLanguages, btnStart, btnStop, progressBar, rtxtLog });
+            ResetMonitor();
+            PopulateLanguages();
+            UpdateButtonsState();
         }
 
-        // -------------------- Eventi UI --------------------
+        // ================================================================
+        // METODI UI
+        // ================================================================
+        private void Log(string text)
+        {
+            if (rtxtLog == null) return;
+            if (rtxtLog.InvokeRequired) { rtxtLog.Invoke(new Action<string>(Log), text); return; }
+            rtxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {text}{Environment.NewLine}");
+            rtxtLog.ScrollToCaret();
+        }
+
+        private void PopulateLanguages()
+        {
+            if (chkLanguages == null) return;
+            chkLanguages.Items.Clear();
+            foreach (var lang in _allLanguages.OrderBy(kvp => kvp.Value))
+            {
+                int idx = chkLanguages.Items.Add($"{lang.Value} ({lang.Key})");
+                chkLanguages.SetItemChecked(idx, true);
+            }
+            Log($"Loaded {chkLanguages.Items.Count} languages");
+        }
+
+        private List<string> GetSelectedLanguages()
+        {
+            var result = new List<string>();
+            if (chkLanguages == null) return result;
+            foreach (var item in chkLanguages.CheckedItems)
+            {
+                string text = item.ToString();
+                int start = text.LastIndexOf('(');
+                int end = text.LastIndexOf(')');
+                if (start > 0 && end > start)
+                    result.Add(text.Substring(start + 1, end - start - 1));
+            }
+            return result;
+        }
+
+        private void UpdateButtonsState()
+        {
+            if (btnExtract == null) return;
+            btnExtract.Enabled = _isPluginFolderSelected;
+            btnExtract.BackColor = _isPluginFolderSelected ? Color.LightYellow : Color.LightGray;
+
+            btnTranslate.Enabled = _isExtracted;
+            btnTranslate.BackColor = _isExtracted ? Color.LightGreen : Color.LightGray;
+
+            btnCompile.Enabled = _isTranslated;
+            btnCompile.BackColor = _isTranslated ? Color.LightCoral : Color.LightGray;
+
+            btnFullUpdate.Enabled = _isPluginFolderSelected;
+            btnFullUpdate.BackColor = _isPluginFolderSelected ? Color.LightSteelBlue : Color.LightGray;
+        }
+
+        // ================================================================
+        // MONITOR
+        // ================================================================
+        private void ResetMonitor()
+        {
+            if (progressBarEnigma2 != null)
+            {
+                progressBarEnigma2.Value = 0;
+                progressBarEnigma2.Visible = false;
+            }
+            _totalItems = 0;
+            _processedItems = 0;
+            _operationStartTime = DateTime.Now;
+            UpdateStatus("Ready", Color.DarkGreen);
+            UpdateCounter();
+            UpdateTimer();
+        }
+
+        private void UpdateStatus(string text, Color color)
+        {
+            if (lblStatus == null) return;
+            if (lblStatus.InvokeRequired) { lblStatus.Invoke(new Action(() => UpdateStatus(text, color))); return; }
+            lblStatus.Text = text;
+            lblStatus.ForeColor = color;
+        }
+
+        private void UpdateCounter()
+        {
+            if (lblCounter == null) return;
+            if (lblCounter.InvokeRequired) { lblCounter.Invoke(new Action(UpdateCounter)); return; }
+            lblCounter.Text = $"{_processedItems} / {_totalItems}";
+        }
+
+        private void UpdateTimer()
+        {
+            if (lblTimer == null) return;
+            if (lblTimer.InvokeRequired) { lblTimer.Invoke(new Action(UpdateTimer)); return; }
+            var elapsed = DateTime.Now - _operationStartTime;
+            lblTimer.Text = $"{elapsed:mm\\:ss}";
+        }
+
+        private void StartOperation(int totalItems, string operationName)
+        {
+            _totalItems = totalItems;
+            _processedItems = 0;
+            _operationStartTime = DateTime.Now;
+            if (progressBarEnigma2 != null)
+            {
+                progressBarEnigma2.Visible = true;
+                progressBarEnigma2.Maximum = Math.Max(totalItems, 1);
+                progressBarEnigma2.Value = 0;
+            }
+            UpdateStatus($"Running: {operationName}", Color.Blue);
+            UpdateCounter();
+            UpdateTimer();
+            if (_timer == null)
+            {
+                _timer = new System.Windows.Forms.Timer();
+                _timer.Interval = 1000;
+                _timer.Tick += (s, e) => UpdateTimer();
+            }
+            _timer.Start();
+        }
+
+        private void UpdateProgress(int processed)
+        {
+            _processedItems = processed;
+            if (progressBarEnigma2 == null) return;
+            if (progressBarEnigma2.InvokeRequired) { progressBarEnigma2.Invoke(new Action(() => UpdateProgress(processed))); return; }
+            progressBarEnigma2.Value = Math.Min(processed, progressBarEnigma2.Maximum);
+            UpdateCounter();
+        }
+
+        private void EndOperation(string status, Color color)
+        {
+            _timer?.Stop();
+            if (progressBarEnigma2 != null) progressBarEnigma2.Visible = false;
+            UpdateStatus(status, color);
+            Log($"Operation completed in {lblTimer?.Text ?? "00:00"}");
+        }
+
+        // ================================================================
+        // EVENTI - MODE
+        // ================================================================
+        private void CmbMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbMode == null || panelProjectMode == null || panelEnigma2Mode == null) return;
+            bool isProject = cmbMode.SelectedIndex == 0;
+            panelProjectMode.Visible = isProject;
+            panelEnigma2Mode.Visible = !isProject;
+        }
+
+        // ================================================================
+        // EVENTI - C# PROJECT
+        // ================================================================
         private void BtnBrowseProject_Click(object sender, EventArgs e)
         {
-            using (var fbd = new FolderBrowserDialog())
-            {
-                fbd.Description = "Select the folder that contains your .cs files";
-                if (fbd.ShowDialog() == DialogResult.OK)
-                    txtProjectPath.Text = fbd.SelectedPath;
-            }
+            using (var fbd = new FolderBrowserDialog()) { if (fbd.ShowDialog() == DialogResult.OK) txtProjectPath.Text = fbd.SelectedPath; }
         }
 
         private void BtnBrowseOutput_Click(object sender, EventArgs e)
         {
-            using (var fbd = new FolderBrowserDialog())
-            {
-                fbd.Description = "Select output folder for .lng files";
-                if (fbd.ShowDialog() == DialogResult.OK)
-                    txtOutputPath.Text = fbd.SelectedPath;
-            }
+            using (var fbd = new FolderBrowserDialog()) { if (fbd.ShowDialog() == DialogResult.OK) txtOutputPath.Text = fbd.SelectedPath; }
         }
 
         private void ChkUseOutput_CheckedChanged(object sender, EventArgs e)
@@ -164,35 +304,21 @@ namespace TranslationProject
                 if (selector.ShowDialog() == DialogResult.OK)
                 {
                     _selectedLanguages = selector.SelectedLanguages;
-                    AppendLog($"Languages selected: {_selectedLanguages.Count} out of {_allLanguages.Count}");
+                    Log($"Selected {_selectedLanguages.Count} languages");
                 }
             }
         }
 
         private async void BtnStart_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtProjectPath.Text))
-            {
-                MessageBox.Show("Select the project folder.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(txtProjectPath.Text)) { MessageBox.Show("Select folder.", "Error"); return; }
             _projectFolder = txtProjectPath.Text.Trim();
-            if (!Directory.Exists(_projectFolder))
-            {
-                MessageBox.Show($"Folder not found: {_projectFolder}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            if (!Directory.Exists(_projectFolder)) { MessageBox.Show("Folder not found.", "Error"); return; }
 
-            if (chkUseOutput.Checked && !string.IsNullOrWhiteSpace(txtOutputPath.Text))
-            {
-                _outputFolder = txtOutputPath.Text.Trim();
-                Directory.CreateDirectory(_outputFolder);
-            }
-            else
-            {
-                _outputFolder = Path.Combine(_projectFolder, "languages");
-                Directory.CreateDirectory(_outputFolder);
-            }
+            _outputFolder = chkUseOutput.Checked && !string.IsNullOrWhiteSpace(txtOutputPath.Text)
+                ? txtOutputPath.Text.Trim()
+                : Path.Combine(_projectFolder, "languages");
+            Directory.CreateDirectory(_outputFolder);
 
             _cacheFile = Path.Combine(_outputFolder, "translation_cache.json");
             LoadCache();
@@ -205,19 +331,12 @@ namespace TranslationProject
 
             try
             {
-                await RunTranslationAsync(_cts.Token);
-                AppendLog("Translation completed successfully.");
-                MessageBox.Show("Operation completed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await RunProjectTranslationAsync(_cts.Token);
+                Log("Translation completed.");
+                MessageBox.Show("Done.", "Success");
             }
-            catch (OperationCanceledException)
-            {
-                AppendLog("Operation cancelled.");
-            }
-            catch (Exception ex)
-            {
-                AppendLog($"ERROR: {ex.Message}");
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            catch (OperationCanceledException) { Log("Cancelled."); }
+            catch (Exception ex) { Log($"ERROR: {ex.Message}"); MessageBox.Show(ex.Message, "Error"); }
             finally
             {
                 btnStart.Enabled = true;
@@ -232,15 +351,372 @@ namespace TranslationProject
         private void BtnStop_Click(object sender, EventArgs e)
         {
             _cts?.Cancel();
-            AppendLog("Cancellation requested...");
+            Log("Stopping...");
         }
 
-        // -------------------- Metodi di traduzione --------------------
-        private async Task RunTranslationAsync(CancellationToken token)
+        // ================================================================
+        // EVENTI - ENIGMA2
+        // ================================================================
+        private void BtnBrowsePlugin_Click(object sender, EventArgs e)
         {
-            AppendLog("Extracting GetTranslation keys from .cs files...");
+            using (var fbd = new FolderBrowserDialog())
+            {
+                if (fbd.ShowDialog() == DialogResult.OK)
+                {
+                    txtPluginPath.Text = fbd.SelectedPath;
+                    _isPluginFolderSelected = true;
+                    _isExtracted = false;
+                    _isTranslated = false;
+                    UpdateButtonsState();
+                    Log($"Selected: {fbd.SelectedPath}");
+                    ResetMonitor();
+                }
+            }
+        }
+
+        private void BtnSelectAll_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < chkLanguages.Items.Count; i++)
+                chkLanguages.SetItemChecked(i, true);
+        }
+
+        private void BtnUnselectAll_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < chkLanguages.Items.Count; i++)
+                chkLanguages.SetItemChecked(i, false);
+        }
+
+        private void ChkUseCache_CheckedChanged(object sender, EventArgs e)
+        {
+            _useCache = chkUseCache.Checked;
+            _enigma2Manager?.SetCacheEnabled(_useCache);
+        }
+
+        private void BtnClearLog_Click(object sender, EventArgs e)
+        {
+            rtxtLog.Clear();
+        }
+
+        private void BtnStopEnigma2_Click(object sender, EventArgs e)
+        {
+            _ctsEnigma2?.Cancel();
+            Log("Stop requested...");
+            btnStopEnigma2.Enabled = false;
+        }
+
+        private async void BtnExtract_Click(object sender, EventArgs e)
+        {
+            if (!_isPluginFolderSelected) return;
+            string pluginPath = txtPluginPath.Text.Trim();
+            if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
+
+            _ctsEnigma2 = new CancellationTokenSource();
+            btnStopEnigma2.Enabled = true;
+            btnExtract.Enabled = false;
+
+            try
+            {
+                Log("Extracting strings...");
+                StartOperation(2, "Extracting");
+
+                var manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
+                var python = manager.ExtractPythonStrings(pluginPath);
+                var xml = manager.ExtractXmlStrings(pluginPath);
+                var all = python.Union(xml).Distinct().ToList();
+
+                Log($"Python: {python.Count}, XML: {xml.Count}, Total: {all.Count}");
+                string output = Path.Combine(pluginPath, "extracted_strings.txt");
+                File.WriteAllLines(output, all.OrderBy(s => s));
+                Log($"Saved: {output}");
+
+                _isExtracted = true;
+                _isTranslated = false;
+                UpdateButtonsState();
+                EndOperation($"Done! {all.Count} strings", Color.DarkGreen);
+            }
+            catch (OperationCanceledException) { Log("Cancelled."); EndOperation("Cancelled", Color.Orange); }
+            catch (Exception ex) { Log($"ERROR: {ex.Message}"); EndOperation($"ERROR", Color.Red); }
+            finally
+            {
+                btnStopEnigma2.Enabled = false;
+                btnExtract.Enabled = true;
+                _ctsEnigma2?.Dispose();
+                _ctsEnigma2 = null;
+            }
+        }
+
+        private async void BtnTranslate_Click(object sender, EventArgs e)
+        {
+            if (!_isExtracted) return;
+            string pluginPath = txtPluginPath.Text.Trim();
+            if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
+
+            var selectedLangs = GetSelectedLanguages();
+            if (selectedLangs.Count == 0) { Log("Select at least one language."); return; }
+
+            _ctsEnigma2 = new CancellationTokenSource();
+            btnStopEnigma2.Enabled = true;
+            btnTranslate.Enabled = false;
+
+            try
+            {
+                Log($"Translating to: {string.Join(", ", selectedLangs)}");
+                _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
+                _enigma2Manager.SetCacheEnabled(_useCache);
+
+                var python = _enigma2Manager.ExtractPythonStrings(pluginPath);
+                var xml = _enigma2Manager.ExtractXmlStrings(pluginPath);
+                var all = python.Union(xml).Distinct().ToList();
+
+                string pluginName = Path.GetFileName(pluginPath);
+                string potFile = Path.Combine(pluginPath, "locale", $"{pluginName}.pot");
+                _enigma2Manager.UpdatePot(potFile, all, pluginName);
+                Log($"POT: {potFile}");
+
+                int total = selectedLangs.Count;
+                StartOperation(total, $"Translating {total} languages");
+                int current = 0;
+
+                foreach (var lang in selectedLangs)
+                {
+                    _ctsEnigma2.Token.ThrowIfCancellationRequested();
+                    current++;
+                    UpdateStatus($"Translating {lang} ({current}/{total})", Color.Blue);
+                    UpdateProgress(current);
+
+                    string poFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.po");
+                    await _enigma2Manager.UpdatePoFileAsync(poFile, potFile, lang, _ctsEnigma2.Token);
+                    Log($"  Updated: {lang}");
+                }
+
+                _isTranslated = true;
+                UpdateButtonsState();
+                EndOperation($"Done! {total} languages", Color.DarkGreen);
+            }
+            catch (OperationCanceledException) { Log("Cancelled."); EndOperation("Cancelled", Color.Orange); }
+            catch (Exception ex) { Log($"ERROR: {ex.Message}"); EndOperation($"ERROR", Color.Red); }
+            finally
+            {
+                btnStopEnigma2.Enabled = false;
+                btnTranslate.Enabled = true;
+                _ctsEnigma2?.Dispose();
+                _ctsEnigma2 = null;
+            }
+        }
+
+        private async void BtnCompile_Click(object sender, EventArgs e)
+        {
+            if (!_isTranslated) return;
+            string pluginPath = txtPluginPath.Text.Trim();
+            if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
+
+            var selectedLangs = GetSelectedLanguages();
+            if (selectedLangs.Count == 0)
+            {
+                Log("Select at least one language to compile.");
+                return;
+            }
+
+            _ctsEnigma2 = new CancellationTokenSource();
+            btnStopEnigma2.Enabled = true;
+            btnCompile.Enabled = false;
+
+            try
+            {
+                string pluginName = Path.GetFileName(pluginPath);
+                string localeDir = Path.Combine(pluginPath, "locale");
+                if (!Directory.Exists(localeDir)) { Log($"Locale not found: {localeDir}"); return; }
+
+                var allDirs = Directory.GetDirectories(localeDir);
+                var dirsToCompile = new List<string>();
+                foreach (var dir in allDirs)
+                {
+                    string lang = Path.GetFileName(dir);
+                    if (selectedLangs.Contains(lang) || selectedLangs.Contains(lang.Replace('_', '-')))
+                        dirsToCompile.Add(dir);
+                }
+
+                if (dirsToCompile.Count == 0)
+                {
+                    Log("No matching language folders found for selected languages.");
+                    return;
+                }
+
+                StartOperation(dirsToCompile.Count, "Compiling selected languages");
+                int current = 0;
+
+                foreach (var dir in dirsToCompile)
+                {
+                    _ctsEnigma2.Token.ThrowIfCancellationRequested();
+                    current++;
+                    string lang = Path.GetFileName(dir);
+                    string poFile = Path.Combine(dir, "LC_MESSAGES", $"{pluginName}.po");
+                    string moFile = Path.Combine(dir, "LC_MESSAGES", $"{pluginName}.mo");
+
+                    if (File.Exists(poFile))
+                    {
+                        UpdateStatus($"Compiling {lang} ({current}/{dirsToCompile.Count})", Color.Blue);
+                        MoCompiler.Compile(poFile, moFile);
+                        Log($"  Compiled: {lang}");
+                    }
+                    else
+                    {
+                        Log($"  Skipping {lang}: .po file not found");
+                    }
+                    UpdateProgress(current);
+                }
+
+                EndOperation($"Done! {dirsToCompile.Count} languages compiled", Color.DarkGreen);
+            }
+            catch (OperationCanceledException) { Log("Cancelled."); EndOperation("Cancelled", Color.Orange); }
+            catch (Exception ex) { Log($"ERROR: {ex.Message}"); EndOperation($"ERROR", Color.Red); }
+            finally
+            {
+                btnStopEnigma2.Enabled = false;
+                btnCompile.Enabled = true;
+                _ctsEnigma2?.Dispose();
+                _ctsEnigma2 = null;
+            }
+        }
+
+        private async void BtnFullUpdate_Click(object sender, EventArgs e)
+        {
+            if (!_isPluginFolderSelected) return;
+            string pluginPath = txtPluginPath.Text.Trim();
+            if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
+
+            var selectedLangs = GetSelectedLanguages();
+            if (selectedLangs.Count == 0) { Log("Select at least one language."); return; }
+
+            _ctsEnigma2 = new CancellationTokenSource();
+            btnStopEnigma2.Enabled = true;
+            btnFullUpdate.Enabled = false;
+
+            try
+            {
+                Log($"Full Update: {Path.GetFileName(pluginPath)}");
+                Log($"Languages: {string.Join(", ", selectedLangs)}");
+
+                _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
+                _enigma2Manager.SetCacheEnabled(_useCache);
+
+                await _enigma2Manager.RunFullUpdateAsync(pluginPath, selectedLangs, _ctsEnigma2.Token);
+
+                _isExtracted = true;
+                _isTranslated = true;
+                UpdateButtonsState();
+                Log("Full update completed.");
+            }
+            catch (OperationCanceledException) { Log("Cancelled."); }
+            catch (Exception ex) { Log($"ERROR: {ex.Message}"); MessageBox.Show(ex.Message, "Error"); }
+            finally
+            {
+                btnStopEnigma2.Enabled = false;
+                btnFullUpdate.Enabled = true;
+                _ctsEnigma2?.Dispose();
+                _ctsEnigma2 = null;
+            }
+        }
+
+        private void BtnDeleteCache_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Delete ALL cached translations?", "Delete Cache", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    string pluginPath = txtPluginPath.Text.Trim();
+                    if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath))
+                    {
+                        Log("Select a valid plugin folder first.");
+                        return;
+                    }
+                    string cacheFile = Path.Combine(pluginPath, "translation_cache.json");
+                    if (File.Exists(cacheFile))
+                    {
+                        File.Delete(cacheFile);
+                        _cache.Clear();
+                        Log($"Cache deleted: {cacheFile}");
+                        MessageBox.Show("Cache deleted.", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        Log("Cache file not found.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"Error: {ex.Message}");
+                }
+            }
+        }
+
+        private void BtnImportCache_Click(object sender, EventArgs e)
+        {
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "JSON files (*.json)|*.json";
+                ofd.Title = "Select Python translation_cache.json";
+                ofd.FileName = "translation_cache.json";
+
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(ofd.FileName);
+                        var pythonCache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                        if (pythonCache == null || pythonCache.Count == 0)
+                        {
+                            Log("Cache file is empty.");
+                            return;
+                        }
+
+                        // Sovrascrivi la cache corrente
+                        _cache.Clear();
+                        foreach (var kvp in pythonCache)
+                        {
+                            _cache[kvp.Key] = kvp.Value;
+                        }
+                        SaveCache();
+
+                        Log($"Imported {pythonCache.Count} translations from Python cache.");
+                        MessageBox.Show($"Imported {pythonCache.Count} translations from Python cache.",
+                            "Cache Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"Error importing cache: {ex.Message}");
+                        MessageBox.Show($"Error: {ex.Message}", "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        // ================================================================
+        // SAVE LOG
+        // ================================================================
+        private void BtnSaveLog_Click(object sender, EventArgs e)
+        {
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Text files (*.txt)|*.txt|Log files (*.log)|*.log";
+                sfd.FileName = $"log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    File.WriteAllText(sfd.FileName, rtxtLog.Text);
+                    Log($"Log saved: {sfd.FileName}");
+                }
+            }
+        }
+        // ================================================================
+        // CORE - C# PROJECT
+        // ================================================================
+        private async Task RunProjectTranslationAsync(CancellationToken token)
+        {
+            Log("Extracting GetTranslation keys...");
             var keys = ExtractKeys(_projectFolder);
-            AppendLog($"Found {keys.Count} unique keys.");
+            Log($"Found {keys.Count} keys");
 
             int total = _selectedLanguages.Count;
             int current = 0;
@@ -248,7 +724,7 @@ namespace TranslationProject
             {
                 token.ThrowIfCancellationRequested();
                 current++;
-                AppendLog($"[{current}/{total}] Processing {lang.Value} ({lang.Key})");
+                Log($"[{current}/{total}] {lang.Value}");
                 await ProcessLanguageAsync(lang.Key, lang.Value, keys, token);
             }
         }
@@ -265,7 +741,7 @@ namespace TranslationProject
                     foreach (Match m in regex.Matches(content))
                         keys.Add(m.Groups[1].Value);
                 }
-                catch (Exception ex) { AppendLog($"Error reading {file}: {ex.Message}"); }
+                catch (Exception ex) { Log($"Error reading {file}: {ex.Message}"); }
             }
             return keys;
         }
@@ -285,8 +761,7 @@ namespace TranslationProject
                 translations[key] = translated;
                 changed = true;
                 count++;
-                if (count % 50 == 0)
-                    AppendLog($"   → {count} new keys translated for {fileName}");
+                if (count % 50 == 0) Log($"  {count} new for {fileName}");
             }
 
             var orphans = translations.Keys.Except(keys).ToList();
@@ -294,18 +769,18 @@ namespace TranslationProject
             {
                 foreach (var k in orphans) translations.Remove(k);
                 changed = true;
-                AppendLog($"   → removed {orphans.Count} obsolete keys");
+                Log($"  removed {orphans.Count} obsolete");
             }
 
             if (changed)
             {
                 var lines = translations.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}: {kvp.Value}").ToArray();
                 await File.WriteAllLinesAsync(filePath, lines, Encoding.UTF8, token);
-                AppendLog($"   → saved ({translations.Count} entries)");
+                Log($"  saved ({translations.Count} entries)");
             }
             else
             {
-                AppendLog("   → no changes");
+                Log("  no changes");
             }
         }
 
@@ -326,6 +801,9 @@ namespace TranslationProject
             return dict;
         }
 
+        // ================================================================
+        // TRANSLATION HELPERS
+        // ================================================================
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
@@ -351,10 +829,7 @@ namespace TranslationProject
                     return translated;
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                AppendLog($"Translation error '{text}' -> {targetLang}: {ex.Message}");
-            }
+            catch (Exception ex) { Log($"Translation error: {ex.Message}"); }
             return text;
         }
 
@@ -411,8 +886,8 @@ namespace TranslationProject
                 try
                 {
                     string json = File.ReadAllText(_cacheFile);
-                    _cache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                    AppendLog($"Cache loaded ({_cache.Count} entries)");
+                    _cache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+                    Log($"Cache loaded: {_cache.Count} entries");
                 }
                 catch { _cache = new Dictionary<string, string>(); }
             }
@@ -424,20 +899,36 @@ namespace TranslationProject
             {
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(_cacheFile, json);
-                AppendLog($"Cache saved ({_cache.Count} entries)");
+                Log($"Cache saved: {_cache.Count} entries");
             }
-            catch (Exception ex) { AppendLog($"Error saving cache: {ex.Message}"); }
+            catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }
         }
 
-        private void AppendLog(string text)
+        private void lblMode_Click(object sender, EventArgs e)
         {
-            if (rtxtLog.InvokeRequired)
+
+        }
+
+        private void rtxtLog_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void PicLogo_Click(object sender, EventArgs e)
+        {
+            try
             {
-                rtxtLog.Invoke(new Action<string>(AppendLog), text);
-                return;
+                string url = "https://github.com/OwnerPlugins/TranslationProject";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true  // necessario per aprire il browser
+                });
             }
-            rtxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {text}{Environment.NewLine}");
-            rtxtLog.ScrollToCaret();
+            catch (Exception ex)
+            {
+                Log($"Errore aprendo link: {ex.Message}");
+            }
         }
     }
 }

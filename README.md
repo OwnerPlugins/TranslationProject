@@ -71,11 +71,13 @@
       <img src="screen/screen2.png?sanitize=true&raw=true" title="preview2" width="400"/><br/>
       <b>Preview 2</b>
     </td>
+  </tr>
+  <tr>  
     <td align="center">
       <img src="screen/screen3.png?sanitize=true&raw=true" title="preview3" width="400"/><br/>
       <b>Preview 3</b>
-    </td>
-  </tr>
+    </td>  
+  </tr>  
 </table>
 
 ---

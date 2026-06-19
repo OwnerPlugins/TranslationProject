@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json.Linq;
 using TranslationProject; 
+using System.Reflection;
 
 namespace TranslationProject
 {
@@ -77,6 +78,10 @@ namespace TranslationProject
         {
             _selectedLanguages = new Dictionary<string, string>(_allLanguages);
             InitializeComponent();
+
+            var version = Assembly.GetEntryAssembly()?.GetName().Version;
+            string shortVersion = version != null ? $"{version.Major}.{version.Minor}" : "1.0";
+            lblVersion.Text = $"Version {shortVersion} - Extract, Translate, Compile";
 
             _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
             if (File.Exists("app.ico")) this.Icon = new Icon("app.ico");

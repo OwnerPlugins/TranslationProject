@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace TranslationProject
 {
@@ -83,7 +84,8 @@ namespace TranslationProject
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(214, 15);
             lblVersion.TabIndex = 1;
-            lblVersion.Text = "Version 2.2 - Extract, Translate, Compile";
+            var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "2.2";
+            lblVersion.Text = $"Version {version} - Extract, Translate, Compile";
             // 
             // lblCredits
             // 

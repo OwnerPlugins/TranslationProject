@@ -165,11 +165,10 @@ namespace TranslationProject
         {
             if (string.IsNullOrEmpty(input)) return "";
             return input
-                .Replace("\n", "\\n")
+                /* .Replace("\n", "\\n") */
                 .Replace("\r", "\\r")
-                .Replace("\t", "\\t")
-                .Replace("\"", "\\\"")
-                .Replace("\\", "\\\\");
+                .Replace("\t", "\\t");
+                /* .Replace("\"", "\\\""); */
         }
 
         private string CleanWhitespace(string text)

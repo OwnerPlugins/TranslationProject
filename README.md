@@ -1,4 +1,16 @@
-# Translation Tool v2.1 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.2 – C# & Enigma2 Plugin Manager
+
+<p align="center">
+  <a href="https://github.com/OwnerPlugins/TranslationProject">
+    <img src="https://img.shields.io/badge/Version-2.2-blue.svg" alt="Version">
+  </a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
+  </a>
+  <a href="https://github.com/OwnerPlugins/TranslationProject/releases">
+    <img src="https://img.shields.io/badge/Download-Latest-green.svg" alt="Download">
+  </a>
+</p>
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -10,18 +22,6 @@
   </a>
   <a href="https://paypal.me/belfagor2005">
     <img src="https://img.shields.io/badge/_-Donate-green.svg?logo=paypal&labelColor=555555&style=for-the-badge" alt="Donate PayPal">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.0-blue.svg" alt="Version">
-  </a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
-    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
-  </a>
-  <a href="https://github.com/OwnerPlugins/TranslationProject/releases">
-    <img src="https://img.shields.io/badge/Download-Latest-green.svg" alt="Download">
   </a>
 </p>
 

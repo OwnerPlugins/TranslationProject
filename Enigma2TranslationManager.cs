@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 
+
 namespace TranslationProject
 {
     public class Enigma2TranslationManager
@@ -234,8 +235,8 @@ namespace TranslationProject
                 await UpdatePoFileAsync(poFile, potFile, lang, token);
 
                 string moFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.mo");
-                MoCompiler.Compile(poFile, moFile);
-                _log?.Invoke($"  Compiled: {moFile}");
+                bool success = GettextTools.RunMsgFmt(poFile, moFile, _log);
+                if (!success) _log($"  ERROR compiling {lang}");
             }
 
             SaveCache();

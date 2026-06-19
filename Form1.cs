@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json.Linq;
+using TranslationProject; 
 
 namespace TranslationProject
 {
@@ -532,8 +533,8 @@ namespace TranslationProject
                     if (File.Exists(poFile))
                     {
                         UpdateStatus($"Compiling {lang} ({current}/{dirsToCompile.Count})", Color.Blue);
-                        MoCompiler.Compile(poFile, moFile);
-                        Log($"  Compiled: {lang}");
+                        bool success = GettextTools.RunMsgFmt(poFile, moFile, Log);
+                        if (!success) Log($"  ERROR compiling {lang}");
                     }
                     else
                     {

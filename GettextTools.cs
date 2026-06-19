@@ -172,15 +172,20 @@ namespace TranslationProject
         {
             try
             {
-                log($"  Running: msgfmt for {Path.GetFileName(poFile)}");
+                string msgfmtPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "msgfmt.exe");
+                if (!File.Exists(msgfmtPath))
+                {
+                    log($"msgfmt.exe not found at: {msgfmtPath}");
+                    return false;
+                }
 
+                log($"  Compiling: {Path.GetFileName(poFile)}");
                 var args = $"\"{poFile}\" -o \"{moFile}\"";
-
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = "msgfmt",
+                        FileName = msgfmtPath,
                         Arguments = args,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -192,11 +197,20 @@ namespace TranslationProject
                 process.Start();
                 process.WaitForExit();
 
-                return process.ExitCode == 0;
+                if (process.ExitCode == 0)
+                {
+                    log($"  Compiled: {moFile}");
+                    return true;
+                }
+                else
+                {
+                    log($"  msgfmt error: {process.StandardError.ReadToEnd()}");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
-                log($"  msgfmt error: {ex.Message}");
+                log($"  msgfmt exception: {ex.Message}");
                 return false;
             }
         }

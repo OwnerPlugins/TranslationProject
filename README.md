@@ -1,4 +1,4 @@
-# Translation Tool v2.0 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.1 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">

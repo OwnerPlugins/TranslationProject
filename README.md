@@ -115,6 +115,51 @@
 
 ---
 
+### 🔧 Custom Plugin Name (Enigma2)
+
+By default, the tool uses the **folder name** as the plugin name for `.pot`, `.po`, and `.mo` files.
+
+However, Enigma2 plugins often have a `PluginLanguageDomain` defined in `__init__.py` that does **not** match the folder name.
+
+**Example:**
+
+- Plugin folder: `WeatherPlugin`
+- PluginLanguageDomain: `foreca`
+
+If you don't change the name, the tool will generate:
+
+```
+locale/foreca.pot        # ❌ Wrong
+locale/it/LC_MESSAGES/foreca.po
+```
+
+But the plugin expects:
+
+```
+locale/WeatherPlugin.pot  # ✅ Correct
+locale/it/LC_MESSAGES/WeatherPlugin.po
+```
+
+**To fix this:**
+
+1. In the **Enigma2 Plugin Manager** panel, locate the **"Plugin name (optional)"** text box.
+2. Enter the exact name used in your `__init__.py` (e.g., `WeatherPlugin`).
+3. Leave it **empty** to use the folder name.
+
+The tool will then generate all files with your custom name.
+
+**Note:** This setting is applied during:
+
+- **Auto Translate**
+- **Compile .mo**
+- **Full Update**
+
+If you change the name after translating, you must **Delete Cache** and **re-translate** to avoid mismatches.
+
+
+---
+
+
 ## ⚙️ Output Format
 
 ### C# Projects

@@ -204,20 +204,23 @@ namespace TranslationProject
             File.WriteAllLines(poFile, po, Encoding.UTF8);
         }
 
-        public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token)
+        public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
         {
+            string pluginName = string.IsNullOrEmpty(customPluginName)
+                ? Path.GetFileName(pluginPath)
+                : customPluginName;
+
             _log?.Invoke($"=== Full Update ===");
             _log?.Invoke($"Plugin: {pluginPath}");
-            _log?.Invoke($"Languages: {string.Join(", ", languages)}");
+            _log?.Invoke($"Name: {pluginName}");
 
             var python = ExtractPythonStrings(pluginPath);
             var xml = ExtractXmlStrings(pluginPath);
             var all = python.Union(xml).Distinct().ToList();
             _log?.Invoke($"Extracted: {python.Count} Python, {xml.Count} XML, {all.Count} total");
 
-            string name = Path.GetFileName(pluginPath);
-            string potFile = Path.Combine(pluginPath, "locale", $"{name}.pot");
-            UpdatePot(potFile, all, name);
+            string potFile = Path.Combine(pluginPath, "locale", $"{pluginName}.pot");
+            UpdatePot(potFile, all, pluginName);
 
             int total = languages.Count;
             int current = 0;
@@ -227,10 +230,10 @@ namespace TranslationProject
                 current++;
                 _log?.Invoke($"[{current}/{total}] {lang}");
 
-                string poFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{name}.po");
+                string poFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.po");
                 await UpdatePoFileAsync(poFile, potFile, lang, token);
 
-                string moFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{name}.mo");
+                string moFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.mo");
                 MoCompiler.Compile(poFile, moFile);
                 _log?.Invoke($"  Compiled: {moFile}");
             }

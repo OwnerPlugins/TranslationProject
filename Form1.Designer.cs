@@ -37,6 +37,8 @@ namespace TranslationProject
             lblPluginPath = new Label();
             txtPluginPath = new TextBox();
             btnBrowsePlugin = new Button();
+            txtPluginName = new TextBox();
+            lblPluginName = new Label();
             lblLangs = new Label();
             chkLanguages = new CheckedListBox();
             btnSelectAll = new Button();
@@ -81,7 +83,7 @@ namespace TranslationProject
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(214, 15);
             lblVersion.TabIndex = 1;
-            lblVersion.Text = "Version 2.0 - Extract, Translate, Compile";
+            lblVersion.Text = "Version 2.1 - Extract, Translate, Compile";
             // 
             // lblCredits
             // 
@@ -127,7 +129,7 @@ namespace TranslationProject
             panelProjectMode.Controls.Add(progressBar);
             panelProjectMode.Location = new Point(0, 125);
             panelProjectMode.Name = "panelProjectMode";
-            panelProjectMode.Size = new Size(950, 200);
+            panelProjectMode.Size = new Size(950, 206);
             panelProjectMode.TabIndex = 5;
             panelProjectMode.Visible = false;
             // 
@@ -241,6 +243,8 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(lblPluginPath);
             panelEnigma2Mode.Controls.Add(txtPluginPath);
             panelEnigma2Mode.Controls.Add(btnBrowsePlugin);
+            panelEnigma2Mode.Controls.Add(txtPluginName);
+            panelEnigma2Mode.Controls.Add(lblPluginName);
             panelEnigma2Mode.Controls.Add(lblLangs);
             panelEnigma2Mode.Controls.Add(chkLanguages);
             panelEnigma2Mode.Controls.Add(btnSelectAll);
@@ -261,7 +265,7 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(lblTimer);
             panelEnigma2Mode.Location = new Point(0, 125);
             panelEnigma2Mode.Name = "panelEnigma2Mode";
-            panelEnigma2Mode.Size = new Size(950, 412);
+            panelEnigma2Mode.Size = new Size(950, 405);
             panelEnigma2Mode.TabIndex = 6;
             panelEnigma2Mode.Visible = false;
             // 
@@ -290,6 +294,23 @@ namespace TranslationProject
             btnBrowsePlugin.Text = "Browse...";
             btnBrowsePlugin.Click += BtnBrowsePlugin_Click;
             // 
+            // txtPluginName
+            // 
+            txtPluginName.Location = new Point(390, 213);
+            txtPluginName.Name = "txtPluginName";
+            txtPluginName.PlaceholderText = "Leave empty for folder name";
+            txtPluginName.Size = new Size(200, 23);
+            txtPluginName.TabIndex = 4;
+            // 
+            // lblPluginName
+            // 
+            lblPluginName.AutoSize = true;
+            lblPluginName.Location = new Point(250, 216);
+            lblPluginName.Name = "lblPluginName";
+            lblPluginName.Size = new Size(132, 15);
+            lblPluginName.TabIndex = 3;
+            lblPluginName.Text = "Plugin name (optional):";
+            // 
             // lblLangs
             // 
             lblLangs.AutoSize = true;
@@ -302,7 +323,7 @@ namespace TranslationProject
             // chkLanguages
             // 
             chkLanguages.CheckOnClick = true;
-            chkLanguages.Location = new Point(18, 85);
+            chkLanguages.Location = new Point(14, 83);
             chkLanguages.Name = "chkLanguages";
             chkLanguages.Size = new Size(220, 148);
             chkLanguages.TabIndex = 4;
@@ -490,7 +511,7 @@ namespace TranslationProject
             rtxtLog.BackColor = Color.Black;
             rtxtLog.Font = new Font("Consolas", 9F);
             rtxtLog.ForeColor = Color.White;
-            rtxtLog.Location = new Point(19, 571);
+            rtxtLog.Location = new Point(15, 588);
             rtxtLog.Name = "rtxtLog";
             rtxtLog.ReadOnly = true;
             rtxtLog.Size = new Size(920, 200);
@@ -559,6 +580,8 @@ namespace TranslationProject
 
         private Label lblPluginPath;
         private Label lblLangs;
+        private Label lblPluginName;
+        private TextBox txtPluginName;
         private TextBox txtPluginPath;
         private Button btnBrowsePlugin;
         private CheckedListBox chkLanguages;

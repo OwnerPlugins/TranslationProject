@@ -66,42 +66,11 @@ namespace TranslationProject
         };
 
         private Dictionary<string, string> _selectedLanguages;
+
         // ================================================================
-        // COSTRUTTORE
+        // CONSTRUCTOR
         // ================================================================
-/*         public Form1()
-        {
-            _selectedLanguages = new Dictionary<string, string>(_allLanguages);
-            InitializeComponent();
-            _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
-            if (File.Exists("app.ico")) this.Icon = new Icon("app.ico");
-            try
-            {
-                string logoPath = Path.Combine(Application.StartupPath, "Google-AI.png");
-                MessageBox.Show($"Cerco logo in: {logoPath}");  // DEBUG
-                if (File.Exists(logoPath))
-                {
-                    picLogo.Image = Image.FromFile(logoPath);
-                    picLogo.SizeMode = PictureBoxSizeMode.Zoom;
-                    picLogo.BringToFront();   // portalo in primo piano
-                    MessageBox.Show("Logo caricato!");  // DEBUG
-                }
-                else
-                {
-                    picLogo.Visible = false;
-                    MessageBox.Show("File non trovato!");  // DEBUG
-                }
-            }
-            catch (Exception ex)
-            {
-                picLogo.Visible = false;
-                MessageBox.Show($"Errore: {ex.Message}");
-            }
-            CmbMode_SelectedIndexChanged(null, EventArgs.Empty);
-            ResetMonitor();
-            PopulateLanguages();
-            UpdateButtonsState();
-        } */
+
 
         public Form1()
         {
@@ -110,7 +79,7 @@ namespace TranslationProject
 
             _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
             if (File.Exists("app.ico")) this.Icon = new Icon("app.ico");
-            
+
             try
             {
                 string logoPath = Path.Combine(Application.StartupPath, "Google-AI.png");
@@ -133,7 +102,7 @@ namespace TranslationProject
         }
 
         // ================================================================
-        // METODI UI
+        // UI METHODS
         // ================================================================
         private void Log(string text)
         {
@@ -184,6 +153,13 @@ namespace TranslationProject
 
             btnFullUpdate.Enabled = _isPluginFolderSelected;
             btnFullUpdate.BackColor = _isPluginFolderSelected ? Color.LightSteelBlue : Color.LightGray;
+        }
+
+        private string GetPluginName(string pluginPath)
+        {
+            return string.IsNullOrWhiteSpace(txtPluginName.Text)
+                ? Path.GetFileName(pluginPath)
+                : txtPluginName.Text.Trim();
         }
 
         // ================================================================
@@ -268,7 +244,7 @@ namespace TranslationProject
         }
 
         // ================================================================
-        // EVENTI - MODE
+        // EVENTS - MODE
         // ================================================================
         private void CmbMode_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -279,7 +255,7 @@ namespace TranslationProject
         }
 
         // ================================================================
-        // EVENTI - C# PROJECT
+        // EVENTS - C# PROJECT
         // ================================================================
         private void BtnBrowseProject_Click(object sender, EventArgs e)
         {
@@ -355,7 +331,7 @@ namespace TranslationProject
         }
 
         // ================================================================
-        // EVENTI - ENIGMA2
+        // EVENTS - ENIGMA2
         // ================================================================
         private void BtnBrowsePlugin_Click(object sender, EventArgs e)
         {
@@ -468,7 +444,7 @@ namespace TranslationProject
                 var xml = _enigma2Manager.ExtractXmlStrings(pluginPath);
                 var all = python.Union(xml).Distinct().ToList();
 
-                string pluginName = Path.GetFileName(pluginPath);
+                string pluginName = GetPluginName(pluginPath);
                 string potFile = Path.Combine(pluginPath, "locale", $"{pluginName}.pot");
                 _enigma2Manager.UpdatePot(potFile, all, pluginName);
                 Log($"POT: {potFile}");
@@ -523,7 +499,7 @@ namespace TranslationProject
 
             try
             {
-                string pluginName = Path.GetFileName(pluginPath);
+                string pluginName = GetPluginName(pluginPath);
                 string localeDir = Path.Combine(pluginPath, "locale");
                 if (!Directory.Exists(localeDir)) { Log($"Locale not found: {localeDir}"); return; }
 
@@ -594,13 +570,14 @@ namespace TranslationProject
 
             try
             {
-                Log($"Full Update: {Path.GetFileName(pluginPath)}");
+                string pluginName = GetPluginName(pluginPath);
+                Log($"Full Update: {pluginName}");
                 Log($"Languages: {string.Join(", ", selectedLangs)}");
 
                 _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
-                await _enigma2Manager.RunFullUpdateAsync(pluginPath, selectedLangs, _ctsEnigma2.Token);
+                await _enigma2Manager.RunFullUpdateAsync(pluginPath, selectedLangs, _ctsEnigma2.Token, pluginName);
 
                 _isExtracted = true;
                 _isTranslated = true;
@@ -672,7 +649,6 @@ namespace TranslationProject
                             return;
                         }
 
-                        // Sovrascrivi la cache corrente
                         _cache.Clear();
                         foreach (var kvp in pythonCache)
                         {
@@ -709,6 +685,27 @@ namespace TranslationProject
                 }
             }
         }
+
+        // ================================================================
+        // LOGO CLICK
+        // ================================================================
+        private void PicLogo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string url = "https://github.com/OwnerPlugins/TranslationProject";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Log($"Error opening link: {ex.Message}");
+            }
+        }
+
         // ================================================================
         // CORE - C# PROJECT
         // ================================================================
@@ -902,33 +899,6 @@ namespace TranslationProject
                 Log($"Cache saved: {_cache.Count} entries");
             }
             catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }
-        }
-
-        private void lblMode_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void rtxtLog_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void PicLogo_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string url = "https://github.com/OwnerPlugins/TranslationProject";
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = url,
-                    UseShellExecute = true  // necessario per aprire il browser
-                });
-            }
-            catch (Exception ex)
-            {
-                Log($"Errore aprendo link: {ex.Message}");
-            }
         }
     }
 }

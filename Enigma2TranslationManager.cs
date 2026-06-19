@@ -311,12 +311,14 @@ namespace TranslationProject
         private string Escape(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
+            return input;
+            /*
             return input
                 .Replace("\n", "\\n")
                 .Replace("\r", "\\r")
                 .Replace("\t", "\\t")
                 .Replace("\"", "\\\"")
-                .Replace("\\", "\\\\");
+                .Replace("\\", "\\\\"); */
         }
 
         private string CleanWhitespace(string text)

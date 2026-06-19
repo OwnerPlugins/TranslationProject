@@ -17,6 +17,7 @@ namespace TranslationProject
     {
         private readonly HttpClient _httpClient = new HttpClient();
         private readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
+        private Dictionary<string, string> _escapeMap = new Dictionary<string, string>();
         private readonly string _cacheFile;
         private readonly Action<string> _log;
         private bool _useCache = true;
@@ -183,16 +184,17 @@ namespace TranslationProject
             foreach (var msgid in msgids)
             {
                 token.ThrowIfCancellationRequested();
-                po.Add($"msgid \"{Escape(msgid)}\"");
-
+                
+                po.Add($"msgid \"{EscapeForPo(msgid)}\"");
+                
                 if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
                 {
-                    po.Add($"msgstr \"{Escape(existingTranslation)}\"");
+                    po.Add($"msgstr \"{EscapeForPo(existingTranslation)}\"");
                 }
                 else
                 {
                     string translatedText = await TranslateAsync(msgid, targetLang, token);
-                    po.Add($"msgstr \"{Escape(translatedText)}\"");
+                    po.Add($"msgstr \"{EscapeForPo(translatedText)}\"");
                     translated++;
                 }
                 po.Add("");
@@ -203,6 +205,12 @@ namespace TranslationProject
 
             Directory.CreateDirectory(Path.GetDirectoryName(poFile));
             File.WriteAllLines(poFile, po, new UTF8Encoding(false));
+        }
+
+        private string EscapeForPo(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("\"", "\\\"");
         }
 
         public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
@@ -243,7 +251,124 @@ namespace TranslationProject
             _log?.Invoke("=== Update completed ===");
         }
 
+        private string ProtectEscapes(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            // Replace escape sequences with placeholders
+            var map = new Dictionary<string, string>();
+            string result = input;
+            int idx = 0;
+
+            // Match \n, \t, \r, \", \\
+            var regex = new Regex(@"\\[ntr\""]|\\\\");
+            result = regex.Replace(result, match =>
+            {
+                string placeholder = $"__ESC_{idx}__";
+                map[placeholder] = match.Value;
+                idx++;
+                return placeholder;
+            });
+
+            // Store map for later restore
+            _escapeMap = map;
+            return result;
+        }
+
+        private string RestoreEscapes(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            string result = input;
+            foreach (var kvp in _escapeMap)
+            {
+                result = result.Replace(kvp.Key, kvp.Value);
+            }
+            return result;
+        }
+
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return text;
+
+            // PROTECT escape sequences BEFORE translation
+            var escapeMap = new Dictionary<string, string>();
+            string protectedText = text;
+            int idx = 0;
+
+            var escapeRegex = new Regex(@"\\[ntr\""]|\\\\");
+            protectedText = escapeRegex.Replace(protectedText, match =>
+            {
+                string placeholder = $"__ESC_{idx}__";
+                escapeMap[placeholder] = match.Value;
+                idx++;
+                return placeholder;
+            });
+
+            // Cache check
+            if (_useCache)
+            {
+                string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
+                if (_cache.TryGetValue(cacheKey, out string cached))
+                {
+                    if (!string.IsNullOrEmpty(cached))
+                        return RestoreEscapes(cached, escapeMap);
+                }
+            }
+
+            // Translate
+            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
+
+                var response = await _httpClient.GetAsync(url, linked.Token);
+                string resp = await response.Content.ReadAsStringAsync(linked.Token);
+                var json = JArray.Parse(resp);
+
+                string translated = "";
+                if (json[0] is JArray arr)
+                {
+                    foreach (var item in arr)
+                        if (item[0] != null)
+                            translated += item[0].ToString();
+                }
+
+                if (!string.IsNullOrEmpty(translated))
+                {
+                    translated = CleanWhitespace(translated);
+                    translated = RestoreEscapes(translated, escapeMap);
+
+                    if (_useCache)
+                    {
+                        string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
+                        _cache[cacheKey] = translated;
+                        SaveCache();
+                    }
+                    return translated;
+                }
+            }
+            catch { }
+
+            return text;
+        }
+
+        private string RestoreEscapes(string input, Dictionary<string, string> escapeMap)
+        {
+            if (string.IsNullOrEmpty(input) || escapeMap == null || escapeMap.Count == 0)
+                return input;
+
+            string result = input;
+            foreach (var kvp in escapeMap)
+            {
+                result = result.Replace(kvp.Key, kvp.Value);
+            }
+            return result;
+        }
+
+/*         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
@@ -307,7 +432,7 @@ namespace TranslationProject
             catch { }
 
             return text;
-        }
+        } */
 
         private string Escape(string input)
         {

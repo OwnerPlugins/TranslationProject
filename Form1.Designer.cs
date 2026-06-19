@@ -83,7 +83,7 @@ namespace TranslationProject
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(214, 15);
             lblVersion.TabIndex = 1;
-            lblVersion.Text = "Version 2.1 - Extract, Translate, Compile";
+            lblVersion.Text = "Version 2.2 - Extract, Translate, Compile";
             // 
             // lblCredits
             // 

@@ -640,7 +640,7 @@ namespace TranslationProject
                 {
                     try
                     {
-                        string json = File.ReadAllText(ofd.FileName);
+                        string json = File.ReadAllText(ofd.FileName, new UTF8Encoding(false));
                         var pythonCache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
                         if (pythonCache == null || pythonCache.Count == 0)
@@ -734,7 +734,7 @@ namespace TranslationProject
             {
                 try
                 {
-                    string content = File.ReadAllText(file);
+                    string content = File.ReadAllText(file, Encoding.UTF8);
                     foreach (Match m in regex.Matches(content))
                         keys.Add(m.Groups[1].Value);
                 }
@@ -772,7 +772,7 @@ namespace TranslationProject
             if (changed)
             {
                 var lines = translations.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}: {kvp.Value}").ToArray();
-                await File.WriteAllLinesAsync(filePath, lines, Encoding.UTF8, token);
+                await File.WriteAllLinesAsync(filePath, lines, new UTF8Encoding(false), token);
                 Log($"  saved ({translations.Count} entries)");
             }
             else
@@ -785,7 +785,7 @@ namespace TranslationProject
         {
             var dict = new Dictionary<string, string>();
             if (!File.Exists(path)) return dict;
-            foreach (string line in File.ReadAllLines(path))
+            foreach (string line in File.ReadAllLines(path, Encoding.UTF8))
             {
                 int colon = line.IndexOf(':');
                 if (colon > 0)
@@ -882,7 +882,7 @@ namespace TranslationProject
             {
                 try
                 {
-                    string json = File.ReadAllText(_cacheFile);
+                    string json = File.ReadAllText(_cacheFile, new UTF8Encoding(false));
                     _cache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
                     Log($"Cache loaded: {_cache.Count} entries");
                 }
@@ -895,7 +895,7 @@ namespace TranslationProject
             try
             {
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(_cacheFile, json);
+                File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
                 Log($"Cache saved: {_cache.Count} entries");
             }
             catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }

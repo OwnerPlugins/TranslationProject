@@ -215,6 +215,12 @@ TranslationProject/
 
 ## 🔧 Changelog
 
+### Version 2.2 – 2026-06-18
+- **Fix:** Issue on .po utf code.
+
+### Version 2.1 – 2026-06-18
+- **Fix:** Issue on .po utf code.
+
 ### Version 2.0 – 2026-06-18
 - **Added:** Full Enigma2 plugin support (extract, translate, compile).
 - **Added:** Dual mode selector (C# / Enigma2).

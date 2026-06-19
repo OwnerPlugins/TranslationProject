@@ -126,7 +126,7 @@ namespace TranslationProject
                 lines.Add("");
             }
 
-            File.WriteAllLines(potFile, lines, Encoding.UTF8);
+            File.WriteAllLines(potFile, lines, new UTF8Encoding(false));
             _log?.Invoke($"POT: {potFile} ({strings.Count} entries)");
         }
 
@@ -201,7 +201,7 @@ namespace TranslationProject
                 _log?.Invoke($"  {targetLang}: translated {translated} new strings");
 
             Directory.CreateDirectory(Path.GetDirectoryName(poFile));
-            File.WriteAllLines(poFile, po, Encoding.UTF8);
+            File.WriteAllLines(poFile, po, new UTF8Encoding(false));
         }
 
         public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
@@ -358,7 +358,7 @@ namespace TranslationProject
             {
                 try
                 {
-                    string json = File.ReadAllText(_cacheFile);
+                    string json = File.ReadAllText(_cacheFile, new UTF8Encoding(false));
                     var temp = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                     if (temp != null)
                     {
@@ -376,7 +376,7 @@ namespace TranslationProject
             try
             {
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(_cacheFile, json);
+                File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
             }
             catch { }
         }

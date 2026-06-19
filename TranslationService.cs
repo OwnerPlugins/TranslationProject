@@ -39,7 +39,7 @@ namespace TranslationProject
 
                 _log($"  Auto-translating: {lang}");
 
-                var lines = File.ReadAllLines(poFile, Encoding.UTF8).ToList();
+                var lines = File.ReadAllLines(poFile, new UTF8Encoding(false)).ToList();
                 var newLines = new List<string>();
                 int translated = 0;
 
@@ -84,7 +84,7 @@ namespace TranslationProject
                 if (translated > 0)
                 {
                     _log($"    {lang}: translated {translated} new strings");
-                    File.WriteAllLines(poFile, newLines, Encoding.UTF8);
+                    File.WriteAllLines(poFile, newLines, new UTF8Encoding(false));
                 }
                 else
                 {
@@ -211,7 +211,7 @@ namespace TranslationProject
             {
                 try
                 {
-                    string json = File.ReadAllText(_cacheFile);
+                    string json = File.ReadAllText(_cacheFile, new UTF8Encoding(false));
                     _cache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
                 }
                 catch { _cache = new Dictionary<string, string>(); }
@@ -223,7 +223,7 @@ namespace TranslationProject
             try
             {
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(_cacheFile, json);
+                File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
             }
             catch { }
         }

@@ -17,6 +17,7 @@ namespace TranslationProject
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             lblHeader = new Label();
             lblVersion = new Label();
             lblCredits = new Label();
@@ -44,79 +45,58 @@ namespace TranslationProject
             chkLanguages = new CheckedListBox();
             btnSelectAll = new Button();
             btnUnselectAll = new Button();
-            chkUseCache = new CheckBox();
             btnExtract = new Button();
             btnTranslate = new Button();
             btnCompile = new Button();
             btnFullUpdate = new Button();
             btnStopEnigma2 = new Button();
-            btnClearLog = new Button();
-            btnSaveLog = new Button();
-            btnDeleteCache = new Button();
-            btnImportCache = new Button();
             progressBarEnigma2 = new ProgressBar();
             lblStatus = new Label();
             lblCounter = new Label();
             lblTimer = new Label();
+            btnClearLog = new Button();
+            btnSaveLog = new Button();
             lblMonitor = new Label();
             rtxtLog = new RichTextBox();
             picLogo = new PictureBox();
+            chkUseCacheGlobal = new CheckBox();
+            btnDeleteCacheGlobal = new Button();
+            btnImportCacheGlobal = new Button();
             panelProjectMode.SuspendLayout();
             panelEnigma2Mode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
             SuspendLayout();
-            // 
+            //
             // lblHeader
-            // 
-            lblHeader.AutoSize = true;
-            lblHeader.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
-            lblHeader.Location = new Point(15, 9);
+            //
+            resources.ApplyResources(lblHeader, "lblHeader");
             lblHeader.Name = "lblHeader";
-            lblHeader.Size = new Size(176, 30);
-            lblHeader.TabIndex = 0;
-            lblHeader.Text = "Translation Tool";
-            // 
+            //
             // lblVersion
-            // 
-            lblVersion.AutoSize = true;
-            lblVersion.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
-            lblVersion.Location = new Point(15, 40);
+            //
+            resources.ApplyResources(lblVersion, "lblVersion");
             lblVersion.Name = "lblVersion";
-            lblVersion.Size = new Size(214, 15);
-            lblVersion.TabIndex = 1;
-            lblVersion.Text = "Version 2.2 - Extract, Translate, Compile";
-            // 
+            //
             // lblCredits
-            // 
-            lblCredits.AutoSize = true;
-            lblCredits.Location = new Point(15, 60);
+            //
+            resources.ApplyResources(lblCredits, "lblCredits");
             lblCredits.Name = "lblCredits";
-            lblCredits.Size = new Size(99, 15);
-            lblCredits.TabIndex = 2;
-            lblCredits.Text = "by Lululla © 2026";
-            // 
+            //
             // lblMode
-            // 
-            lblMode.AutoSize = true;
-            lblMode.Location = new Point(15, 95);
+            //
+            resources.ApplyResources(lblMode, "lblMode");
             lblMode.Name = "lblMode";
-            lblMode.Size = new Size(41, 15);
-            lblMode.TabIndex = 3;
-            lblMode.Text = "Mode:";
-            // 
+            //
             // cmbMode
-            // 
+            //
             cmbMode.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbMode.Items.AddRange(new object[] { "C# Translation Project", "Enigma2 Plugin Manager" });
-            cmbMode.Location = new Point(81, 92);
+            cmbMode.Items.AddRange(new object[] { resources.GetString("cmbMode.Items"), resources.GetString("cmbMode.Items1") });
+            resources.ApplyResources(cmbMode, "cmbMode");
             cmbMode.Name = "cmbMode";
-            cmbMode.Size = new Size(250, 23);
-            cmbMode.TabIndex = 4;
             cmbMode.SelectedIndexChanged += CmbMode_SelectedIndexChanged;
-            // 
+            //
             // panelProjectMode
-            // 
-            panelProjectMode.BorderStyle = BorderStyle.FixedSingle;
+            //
             panelProjectMode.Controls.Add(lblProject);
             panelProjectMode.Controls.Add(txtProjectPath);
             panelProjectMode.Controls.Add(btnBrowseProject);
@@ -128,119 +108,78 @@ namespace TranslationProject
             panelProjectMode.Controls.Add(btnStart);
             panelProjectMode.Controls.Add(btnStop);
             panelProjectMode.Controls.Add(progressBar);
-            panelProjectMode.Location = new Point(0, 125);
+            resources.ApplyResources(panelProjectMode, "panelProjectMode");
             panelProjectMode.Name = "panelProjectMode";
-            panelProjectMode.Size = new Size(950, 206);
-            panelProjectMode.TabIndex = 5;
-            panelProjectMode.Visible = false;
-            // 
+            //
             // lblProject
-            // 
-            lblProject.AutoSize = true;
-            lblProject.Location = new Point(15, 10);
+            //
+            resources.ApplyResources(lblProject, "lblProject");
             lblProject.Name = "lblProject";
-            lblProject.Size = new Size(81, 15);
-            lblProject.TabIndex = 0;
-            lblProject.Text = "Project folder:";
-            // 
+            //
             // txtProjectPath
-            // 
-            txtProjectPath.Location = new Point(18, 30);
+            //
+            resources.ApplyResources(txtProjectPath, "txtProjectPath");
             txtProjectPath.Name = "txtProjectPath";
-            txtProjectPath.Size = new Size(700, 23);
-            txtProjectPath.TabIndex = 1;
-            // 
+            //
             // btnBrowseProject
-            // 
-            btnBrowseProject.Location = new Point(730, 28);
+            //
+            resources.ApplyResources(btnBrowseProject, "btnBrowseProject");
             btnBrowseProject.Name = "btnBrowseProject";
-            btnBrowseProject.Size = new Size(80, 27);
-            btnBrowseProject.TabIndex = 2;
-            btnBrowseProject.Text = "Browse...";
             btnBrowseProject.Click += BtnBrowseProject_Click;
-            // 
+            //
             // lblOutput
-            // 
-            lblOutput.AutoSize = true;
-            lblOutput.Location = new Point(15, 65);
+            //
+            resources.ApplyResources(lblOutput, "lblOutput");
             lblOutput.Name = "lblOutput";
-            lblOutput.Size = new Size(82, 15);
-            lblOutput.TabIndex = 3;
-            lblOutput.Text = "Output folder:";
-            // 
+            //
             // txtOutputPath
-            // 
-            txtOutputPath.Enabled = false;
-            txtOutputPath.Location = new Point(18, 85);
+            //
+            resources.ApplyResources(txtOutputPath, "txtOutputPath");
             txtOutputPath.Name = "txtOutputPath";
-            txtOutputPath.Size = new Size(700, 23);
-            txtOutputPath.TabIndex = 4;
-            // 
+            //
             // btnBrowseOutput
-            // 
-            btnBrowseOutput.Enabled = false;
-            btnBrowseOutput.Location = new Point(730, 83);
+            //
+            resources.ApplyResources(btnBrowseOutput, "btnBrowseOutput");
             btnBrowseOutput.Name = "btnBrowseOutput";
-            btnBrowseOutput.Size = new Size(80, 27);
-            btnBrowseOutput.TabIndex = 5;
-            btnBrowseOutput.Text = "Browse...";
             btnBrowseOutput.Click += BtnBrowseOutput_Click;
-            // 
+            //
             // chkUseOutput
-            // 
-            chkUseOutput.AutoSize = true;
-            chkUseOutput.Location = new Point(18, 115);
+            //
+            resources.ApplyResources(chkUseOutput, "chkUseOutput");
             chkUseOutput.Name = "chkUseOutput";
-            chkUseOutput.Size = new Size(127, 19);
-            chkUseOutput.TabIndex = 6;
-            chkUseOutput.Text = "Use custom output";
             chkUseOutput.CheckedChanged += ChkUseOutput_CheckedChanged;
-            // 
+            //
             // btnSelectLanguages
-            // 
+            //
             btnSelectLanguages.BackColor = Color.LightBlue;
-            btnSelectLanguages.Location = new Point(18, 150);
+            resources.ApplyResources(btnSelectLanguages, "btnSelectLanguages");
             btnSelectLanguages.Name = "btnSelectLanguages";
-            btnSelectLanguages.Size = new Size(130, 30);
-            btnSelectLanguages.TabIndex = 7;
-            btnSelectLanguages.Text = "Select Languages";
             btnSelectLanguages.UseVisualStyleBackColor = false;
             btnSelectLanguages.Click += BtnSelectLanguages_Click;
-            // 
+            //
             // btnStart
-            // 
+            //
             btnStart.BackColor = Color.LightGreen;
-            btnStart.Location = new Point(160, 150);
+            resources.ApplyResources(btnStart, "btnStart");
             btnStart.Name = "btnStart";
-            btnStart.Size = new Size(100, 30);
-            btnStart.TabIndex = 8;
-            btnStart.Text = "Start";
             btnStart.UseVisualStyleBackColor = false;
             btnStart.Click += BtnStart_Click;
-            // 
+            //
             // btnStop
-            // 
+            //
             btnStop.BackColor = Color.LightCoral;
-            btnStop.Enabled = false;
-            btnStop.Location = new Point(270, 150);
+            resources.ApplyResources(btnStop, "btnStop");
             btnStop.Name = "btnStop";
-            btnStop.Size = new Size(80, 30);
-            btnStop.TabIndex = 9;
-            btnStop.Text = "Stop";
             btnStop.UseVisualStyleBackColor = false;
             btnStop.Click += BtnStop_Click;
-            // 
+            //
             // progressBar
-            // 
-            progressBar.Location = new Point(370, 155);
+            //
+            resources.ApplyResources(progressBar, "progressBar");
             progressBar.Name = "progressBar";
-            progressBar.Size = new Size(200, 20);
-            progressBar.TabIndex = 10;
-            progressBar.Visible = false;
-            // 
+            //
             // panelEnigma2Mode
-            // 
-            panelEnigma2Mode.BorderStyle = BorderStyle.FixedSingle;
+            //
             panelEnigma2Mode.Controls.Add(lblPluginPath);
             panelEnigma2Mode.Controls.Add(txtPluginPath);
             panelEnigma2Mode.Controls.Add(btnBrowsePlugin);
@@ -250,293 +189,198 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(chkLanguages);
             panelEnigma2Mode.Controls.Add(btnSelectAll);
             panelEnigma2Mode.Controls.Add(btnUnselectAll);
-            panelEnigma2Mode.Controls.Add(chkUseCache);
             panelEnigma2Mode.Controls.Add(btnExtract);
             panelEnigma2Mode.Controls.Add(btnTranslate);
             panelEnigma2Mode.Controls.Add(btnCompile);
             panelEnigma2Mode.Controls.Add(btnFullUpdate);
             panelEnigma2Mode.Controls.Add(btnStopEnigma2);
-            panelEnigma2Mode.Controls.Add(btnClearLog);
-            panelEnigma2Mode.Controls.Add(btnSaveLog);
-            panelEnigma2Mode.Controls.Add(btnDeleteCache);
-            panelEnigma2Mode.Controls.Add(btnImportCache);
             panelEnigma2Mode.Controls.Add(progressBarEnigma2);
             panelEnigma2Mode.Controls.Add(lblStatus);
             panelEnigma2Mode.Controls.Add(lblCounter);
             panelEnigma2Mode.Controls.Add(lblTimer);
-            panelEnigma2Mode.Location = new Point(0, 125);
+            resources.ApplyResources(panelEnigma2Mode, "panelEnigma2Mode");
             panelEnigma2Mode.Name = "panelEnigma2Mode";
-            panelEnigma2Mode.Size = new Size(950, 412);
-            panelEnigma2Mode.TabIndex = 6;
-            panelEnigma2Mode.Visible = false;
-            // 
+            //
             // lblPluginPath
-            // 
-            lblPluginPath.AutoSize = true;
-            lblPluginPath.Location = new Point(15, 10);
+            //
+            resources.ApplyResources(lblPluginPath, "lblPluginPath");
             lblPluginPath.Name = "lblPluginPath";
-            lblPluginPath.Size = new Size(78, 15);
-            lblPluginPath.TabIndex = 0;
-            lblPluginPath.Text = "Plugin folder:";
-            // 
+            //
             // txtPluginPath
-            // 
-            txtPluginPath.Location = new Point(18, 30);
+            //
+            resources.ApplyResources(txtPluginPath, "txtPluginPath");
             txtPluginPath.Name = "txtPluginPath";
-            txtPluginPath.Size = new Size(700, 23);
-            txtPluginPath.TabIndex = 1;
-            // 
+            //
             // btnBrowsePlugin
-            // 
-            btnBrowsePlugin.Location = new Point(730, 28);
+            //
+            resources.ApplyResources(btnBrowsePlugin, "btnBrowsePlugin");
             btnBrowsePlugin.Name = "btnBrowsePlugin";
-            btnBrowsePlugin.Size = new Size(80, 27);
-            btnBrowsePlugin.TabIndex = 2;
-            btnBrowsePlugin.Text = "Browse...";
             btnBrowsePlugin.Click += BtnBrowsePlugin_Click;
-            // 
+            //
             // txtPluginName
-            // 
-            txtPluginName.Location = new Point(390, 213);
+            //
+            resources.ApplyResources(txtPluginName, "txtPluginName");
             txtPluginName.Name = "txtPluginName";
-            txtPluginName.PlaceholderText = "Leave empty for folder name";
-            txtPluginName.Size = new Size(200, 23);
-            txtPluginName.TabIndex = 4;
-            // 
+            //
             // lblPluginName
-            // 
-            lblPluginName.AutoSize = true;
-            lblPluginName.Location = new Point(250, 216);
+            //
+            resources.ApplyResources(lblPluginName, "lblPluginName");
             lblPluginName.Name = "lblPluginName";
-            lblPluginName.Size = new Size(132, 15);
-            lblPluginName.TabIndex = 3;
-            lblPluginName.Text = "Plugin name (optional):";
-            // 
+            //
             // lblLangs
-            // 
-            lblLangs.AutoSize = true;
-            lblLangs.Location = new Point(15, 65);
+            //
+            resources.ApplyResources(lblLangs, "lblLangs");
             lblLangs.Name = "lblLangs";
-            lblLangs.Size = new Size(67, 15);
-            lblLangs.TabIndex = 3;
-            lblLangs.Text = "Languages:";
-            // 
+            //
             // chkLanguages
-            // 
+            //
             chkLanguages.CheckOnClick = true;
-            chkLanguages.Location = new Point(14, 83);
+            resources.ApplyResources(chkLanguages, "chkLanguages");
             chkLanguages.Name = "chkLanguages";
-            chkLanguages.Size = new Size(220, 148);
-            chkLanguages.TabIndex = 4;
-            // 
+            //
             // btnSelectAll
-            // 
-            btnSelectAll.Location = new Point(18, 245);
+            //
+            resources.ApplyResources(btnSelectAll, "btnSelectAll");
             btnSelectAll.Name = "btnSelectAll";
-            btnSelectAll.Size = new Size(100, 25);
-            btnSelectAll.TabIndex = 5;
-            btnSelectAll.Text = "Select All";
             btnSelectAll.Click += BtnSelectAll_Click;
-            // 
+            //
             // btnUnselectAll
-            // 
-            btnUnselectAll.Location = new Point(125, 245);
+            //
+            resources.ApplyResources(btnUnselectAll, "btnUnselectAll");
             btnUnselectAll.Name = "btnUnselectAll";
-            btnUnselectAll.Size = new Size(100, 25);
-            btnUnselectAll.TabIndex = 6;
-            btnUnselectAll.Text = "Unselect All";
             btnUnselectAll.Click += BtnUnselectAll_Click;
-            // 
-            // chkUseCache
-            // 
-            chkUseCache.AutoSize = true;
-            chkUseCache.Checked = true;
-            chkUseCache.CheckState = CheckState.Checked;
-            chkUseCache.Location = new Point(250, 251);
-            chkUseCache.Name = "chkUseCache";
-            chkUseCache.Size = new Size(81, 19);
-            chkUseCache.TabIndex = 7;
-            chkUseCache.Text = "Use Cache";
-            chkUseCache.CheckedChanged += ChkUseCache_CheckedChanged;
-            // 
+            //
             // btnExtract
-            // 
+            //
             btnExtract.BackColor = Color.LightYellow;
-            btnExtract.Enabled = false;
-            btnExtract.Location = new Point(270, 85);
+            resources.ApplyResources(btnExtract, "btnExtract");
             btnExtract.Name = "btnExtract";
-            btnExtract.Size = new Size(100, 30);
-            btnExtract.TabIndex = 8;
-            btnExtract.Text = "Extract";
             btnExtract.UseVisualStyleBackColor = false;
             btnExtract.Click += BtnExtract_Click;
-            // 
+            //
             // btnTranslate
-            // 
+            //
             btnTranslate.BackColor = Color.LightGreen;
-            btnTranslate.Enabled = false;
-            btnTranslate.Location = new Point(380, 85);
+            resources.ApplyResources(btnTranslate, "btnTranslate");
             btnTranslate.Name = "btnTranslate";
-            btnTranslate.Size = new Size(100, 30);
-            btnTranslate.TabIndex = 9;
-            btnTranslate.Text = "Translate";
             btnTranslate.UseVisualStyleBackColor = false;
             btnTranslate.Click += BtnTranslate_Click;
-            // 
+            //
             // btnCompile
-            // 
+            //
             btnCompile.BackColor = Color.LightCoral;
-            btnCompile.Enabled = false;
-            btnCompile.Location = new Point(490, 85);
+            resources.ApplyResources(btnCompile, "btnCompile");
             btnCompile.Name = "btnCompile";
-            btnCompile.Size = new Size(100, 30);
-            btnCompile.TabIndex = 10;
-            btnCompile.Text = "Compile";
             btnCompile.UseVisualStyleBackColor = false;
             btnCompile.Click += BtnCompile_Click;
-            // 
+            //
             // btnFullUpdate
-            // 
+            //
             btnFullUpdate.BackColor = Color.LightSteelBlue;
-            btnFullUpdate.Enabled = false;
-            btnFullUpdate.Location = new Point(600, 85);
+            resources.ApplyResources(btnFullUpdate, "btnFullUpdate");
             btnFullUpdate.Name = "btnFullUpdate";
-            btnFullUpdate.Size = new Size(100, 30);
-            btnFullUpdate.TabIndex = 11;
-            btnFullUpdate.Text = "Full Update";
             btnFullUpdate.UseVisualStyleBackColor = false;
             btnFullUpdate.Click += BtnFullUpdate_Click;
-            // 
+            //
             // btnStopEnigma2
-            // 
+            //
             btnStopEnigma2.BackColor = Color.IndianRed;
-            btnStopEnigma2.Enabled = false;
-            btnStopEnigma2.Location = new Point(710, 85);
+            resources.ApplyResources(btnStopEnigma2, "btnStopEnigma2");
             btnStopEnigma2.Name = "btnStopEnigma2";
-            btnStopEnigma2.Size = new Size(80, 30);
-            btnStopEnigma2.TabIndex = 12;
-            btnStopEnigma2.Text = "Stop";
             btnStopEnigma2.UseVisualStyleBackColor = false;
             btnStopEnigma2.Click += BtnStopEnigma2_Click;
-            // 
-            // btnClearLog
-            // 
-            btnClearLog.Location = new Point(270, 125);
-            btnClearLog.Name = "btnClearLog";
-            btnClearLog.Size = new Size(100, 30);
-            btnClearLog.TabIndex = 13;
-            btnClearLog.Text = "Clear Log";
-            btnClearLog.Click += BtnClearLog_Click;
-            // 
-            // btnSaveLog
-            // 
-            btnSaveLog.Location = new Point(380, 125);
-            btnSaveLog.Name = "btnSaveLog";
-            btnSaveLog.Size = new Size(100, 30);
-            btnSaveLog.TabIndex = 14;
-            btnSaveLog.Text = "Save Log";
-            btnSaveLog.Click += BtnSaveLog_Click;
-            // 
-            // btnDeleteCache
-            // 
-            btnDeleteCache.BackColor = Color.IndianRed;
-            btnDeleteCache.ForeColor = Color.White;
-            btnDeleteCache.Location = new Point(490, 125);
-            btnDeleteCache.Name = "btnDeleteCache";
-            btnDeleteCache.Size = new Size(100, 30);
-            btnDeleteCache.TabIndex = 15;
-            btnDeleteCache.Text = "Delete Cache";
-            btnDeleteCache.UseVisualStyleBackColor = false;
-            btnDeleteCache.Click += BtnDeleteCache_Click;
-            // 
-            // btnImportCache
-            // 
-            btnImportCache.BackColor = Color.LightGoldenrodYellow;
-            btnImportCache.Location = new Point(600, 125);
-            btnImportCache.Name = "btnImportCache";
-            btnImportCache.Size = new Size(100, 30);
-            btnImportCache.TabIndex = 16;
-            btnImportCache.Text = "Import Cache";
-            btnImportCache.UseVisualStyleBackColor = false;
-            btnImportCache.Click += BtnImportCache_Click;
-            // 
+            //
             // progressBarEnigma2
-            // 
-            progressBarEnigma2.Location = new Point(18, 293);
+            //
+            resources.ApplyResources(progressBarEnigma2, "progressBarEnigma2");
             progressBarEnigma2.Name = "progressBarEnigma2";
-            progressBarEnigma2.Size = new Size(850, 20);
-            progressBarEnigma2.TabIndex = 17;
-            progressBarEnigma2.Visible = false;
-            // 
+            //
             // lblStatus
-            // 
-            lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            //
+            resources.ApplyResources(lblStatus, "lblStatus");
             lblStatus.ForeColor = Color.DarkGreen;
-            lblStatus.Location = new Point(18, 338);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(850, 20);
-            lblStatus.TabIndex = 18;
-            lblStatus.Text = "Ready";
-            lblStatus.TextAlign = ContentAlignment.MiddleLeft;
             lblStatus.Click += lblStatus_Click;
-            // 
+            //
             // lblCounter
-            // 
-            lblCounter.Location = new Point(18, 375);
+            //
+            resources.ApplyResources(lblCounter, "lblCounter");
             lblCounter.Name = "lblCounter";
-            lblCounter.Size = new Size(200, 20);
-            lblCounter.TabIndex = 19;
-            lblCounter.Text = "0 / 0";
-            // 
+            //
             // lblTimer
-            // 
+            //
             lblTimer.ForeColor = Color.DarkRed;
-            lblTimer.Location = new Point(270, 375);
+            resources.ApplyResources(lblTimer, "lblTimer");
             lblTimer.Name = "lblTimer";
-            lblTimer.Size = new Size(150, 20);
-            lblTimer.TabIndex = 20;
-            lblTimer.Text = "00:00";
-            // 
+            //
+            // btnClearLog
+            //
+            btnClearLog.BackColor = Color.LightCoral;
+            resources.ApplyResources(btnClearLog, "btnClearLog");
+            btnClearLog.Name = "btnClearLog";
+            btnClearLog.UseVisualStyleBackColor = false;
+            btnClearLog.Click += BtnClearLog_Click;
+            //
+            // btnSaveLog
+            //
+            btnSaveLog.BackColor = Color.LightGreen;
+            resources.ApplyResources(btnSaveLog, "btnSaveLog");
+            btnSaveLog.Name = "btnSaveLog";
+            btnSaveLog.UseVisualStyleBackColor = false;
+            btnSaveLog.Click += BtnSaveLog_Click;
+            //
             // lblMonitor
-            // 
-            lblMonitor.AutoSize = true;
-            lblMonitor.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            //
+            resources.ApplyResources(lblMonitor, "lblMonitor");
             lblMonitor.ForeColor = Color.DarkBlue;
-            lblMonitor.Location = new Point(19, 553);
             lblMonitor.Name = "lblMonitor";
-            lblMonitor.Size = new Size(67, 15);
-            lblMonitor.TabIndex = 7;
-            lblMonitor.Text = "MONITOR:";
-            // 
+            //
             // rtxtLog
-            // 
-            rtxtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            //
+            resources.ApplyResources(rtxtLog, "rtxtLog");
             rtxtLog.BackColor = Color.Black;
-            rtxtLog.Font = new Font("Consolas", 9F);
             rtxtLog.ForeColor = Color.White;
-            rtxtLog.Location = new Point(15, 588);
             rtxtLog.Name = "rtxtLog";
             rtxtLog.ReadOnly = true;
-            rtxtLog.Size = new Size(920, 200);
-            rtxtLog.TabIndex = 8;
-            rtxtLog.Text = "";
-            // 
+            //
             // picLogo
-            // 
+            //
             picLogo.BackColor = Color.Transparent;
             picLogo.Cursor = Cursors.Hand;
-            picLogo.Location = new Point(746, 35);
+            resources.ApplyResources(picLogo, "picLogo");
             picLogo.Name = "picLogo";
-            picLogo.Size = new Size(150, 75);
-            picLogo.SizeMode = PictureBoxSizeMode.Zoom;
-            picLogo.TabIndex = 99;
             picLogo.TabStop = false;
             picLogo.Click += PicLogo_Click;
-            // 
+            //
+            // chkUseCacheGlobal
+            //
+            resources.ApplyResources(chkUseCacheGlobal, "chkUseCacheGlobal");
+            chkUseCacheGlobal.Checked = true;
+            chkUseCacheGlobal.CheckState = CheckState.Checked;
+            chkUseCacheGlobal.Name = "chkUseCacheGlobal";
+            chkUseCacheGlobal.UseVisualStyleBackColor = true;
+            chkUseCacheGlobal.CheckedChanged += ChkUseCacheGlobal_CheckedChanged;
+            //
+            // btnDeleteCacheGlobal
+            //
+            btnDeleteCacheGlobal.BackColor = Color.LightYellow;
+            resources.ApplyResources(btnDeleteCacheGlobal, "btnDeleteCacheGlobal");
+            btnDeleteCacheGlobal.Name = "btnDeleteCacheGlobal";
+            btnDeleteCacheGlobal.UseVisualStyleBackColor = false;
+            btnDeleteCacheGlobal.Click += BtnDeleteCacheGlobal_Click;
+            //
+            // btnImportCacheGlobal
+            //
+            btnImportCacheGlobal.BackColor = Color.LightCyan;
+            resources.ApplyResources(btnImportCacheGlobal, "btnImportCacheGlobal");
+            btnImportCacheGlobal.Name = "btnImportCacheGlobal";
+            btnImportCacheGlobal.UseVisualStyleBackColor = false;
+            btnImportCacheGlobal.Click += BtnImportCacheGlobal_Click;
+            //
             // Form1
-            // 
+            //
             BackColor = SystemColors.Control;
-            ClientSize = new Size(950, 800);
+            resources.ApplyResources(this, "$this");
             Controls.Add(lblHeader);
             Controls.Add(lblVersion);
             Controls.Add(lblCredits);
@@ -544,14 +388,15 @@ namespace TranslationProject
             Controls.Add(cmbMode);
             Controls.Add(panelProjectMode);
             Controls.Add(panelEnigma2Mode);
+            Controls.Add(chkUseCacheGlobal);
+            Controls.Add(btnDeleteCacheGlobal);
+            Controls.Add(btnImportCacheGlobal);
             Controls.Add(lblMonitor);
             Controls.Add(rtxtLog);
             Controls.Add(picLogo);
-            Font = new Font("Segoe UI", 9F);
-            MinimumSize = new Size(950, 800);
+            Controls.Add(btnSaveLog);
+            Controls.Add(btnClearLog);
             Name = "Form1";
-            StartPosition = FormStartPosition.CenterScreen;
-            Text = "Translation Tool";
             panelProjectMode.ResumeLayout(false);
             panelProjectMode.PerformLayout();
             panelEnigma2Mode.ResumeLayout(false);
@@ -561,6 +406,7 @@ namespace TranslationProject
             PerformLayout();
         }
 
+        // Declarations
         private Label lblHeader;
         private Label lblVersion;
         private Label lblCredits;
@@ -590,7 +436,6 @@ namespace TranslationProject
         private CheckedListBox chkLanguages;
         private Button btnSelectAll;
         private Button btnUnselectAll;
-        private CheckBox chkUseCache;
         private Button btnExtract;
         private Button btnTranslate;
         private Button btnCompile;
@@ -598,8 +443,6 @@ namespace TranslationProject
         private Button btnStopEnigma2;
         private Button btnClearLog;
         private Button btnSaveLog;
-        private Button btnDeleteCache;
-        private Button btnImportCache;
 
         private ProgressBar progressBarEnigma2;
         private Label lblStatus;
@@ -607,8 +450,11 @@ namespace TranslationProject
         private Label lblTimer;
 
         private PictureBox picLogo;
-
         private Label lblMonitor;
         private RichTextBox rtxtLog;
+        // Unified cache controls
+        private CheckBox chkUseCacheGlobal;
+        private Button btnDeleteCacheGlobal;
+        private Button btnImportCacheGlobal;
     }
 }

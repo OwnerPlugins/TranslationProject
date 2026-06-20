@@ -1,16 +1,4 @@
-# Translation Tool v2.2 – C# & Enigma2 Plugin Manager
-
-<p align="center">
-  <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.2-blue.svg" alt="Version">
-  </a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
-    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
-  </a>
-  <a href="https://github.com/OwnerPlugins/TranslationProject/releases">
-    <img src="https://img.shields.io/badge/Download-Latest-green.svg" alt="Download">
-  </a>
-</p>
+# Translation Tool v2.1 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -22,6 +10,18 @@
   </a>
   <a href="https://paypal.me/belfagor2005">
     <img src="https://img.shields.io/badge/_-Donate-green.svg?logo=paypal&labelColor=555555&style=for-the-badge" alt="Donate PayPal">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/OwnerPlugins/TranslationProject">
+    <img src="https://img.shields.io/badge/Version-2.0-blue.svg" alt="Version">
+  </a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
+  </a>
+  <a href="https://github.com/OwnerPlugins/TranslationProject/releases">
+    <img src="https://img.shields.io/badge/Download-Latest-green.svg" alt="Download">
   </a>
 </p>
 
@@ -72,12 +72,6 @@
       <b>Preview 2</b>
     </td>
   </tr>
-  <tr>  
-    <td align="center">
-      <img src="screen/screen3.png?sanitize=true&raw=true" title="preview3" width="400"/><br/>
-      <b>Preview 3</b>
-    </td>  
-  </tr>  
 </table>
 
 ---
@@ -214,6 +208,17 @@ TranslationProject/
 ---
 
 ## 🔧 Changelog
+
+### Version 2.3 – 2026-06-20
+- **Fix:** Form now auto-expands when selecting a project or plugin folder (C# and Enigma2 modes).
+- **Fix:** Stop button now properly cancels operations in both modes.
+- **Fix:** Progress bar now updates correctly in Enigma2 mode.
+- **Fix:** Escape sequences (`\n`, `\t`, `\"`) are now preserved correctly during translation (fixes `\p`, `\i`, `\s` errors).
+- **Fix:** Syntax errors in `.po` files for languages like Arabic, Japanese, Korean, etc. (invalid control sequences, mismatched `\n`).
+- **Added:** Unified cache controls (Use Cache, Delete Cache, Import Cache) placed globally for both modes.
+- **Added:** `GetCurrentCacheFile()` helper to detect cache path automatically based on active mode.
+- **Improved:** UI layout – log area now hidden at startup and expands when needed.
+- **Improved:** Full Update now compiles `.mo` files using embedded `msgfmt.exe` (no external dependencies).
 
 ### Version 2.2 – 2026-06-18
 - **Fix:** Issue on .po utf code.

@@ -117,4 +117,1159 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="lblHeader.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="lblHeader.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 16pt, style=Bold</value>
+  </data>
+  <data name="lblHeader.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 9</value>
+  </data>
+  <data name="lblHeader.Size" type="System.Drawing.Size, System.Drawing">
+    <value>176, 30</value>
+  </data>
+  <data name="lblHeader.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="lblHeader.Text" xml:space="preserve">
+    <value>Translation Tool</value>
+  </data>
+  <data name="&gt;&gt;lblHeader.Name" xml:space="preserve">
+    <value>lblHeader</value>
+  </data>
+  <data name="&gt;&gt;lblHeader.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblHeader.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblHeader.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="lblVersion.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblVersion.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt, style=Italic</value>
+  </data>
+  <data name="lblVersion.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 40</value>
+  </data>
+  <data name="lblVersion.Size" type="System.Drawing.Size, System.Drawing">
+    <value>214, 15</value>
+  </data>
+  <data name="lblVersion.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="lblVersion.Text" xml:space="preserve">
+    <value>Version 2.2 - Extract, Translate, Compile</value>
+  </data>
+  <data name="&gt;&gt;lblVersion.Name" xml:space="preserve">
+    <value>lblVersion</value>
+  </data>
+  <data name="&gt;&gt;lblVersion.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblVersion.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblVersion.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="lblCredits.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblCredits.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 60</value>
+  </data>
+  <data name="lblCredits.Size" type="System.Drawing.Size, System.Drawing">
+    <value>99, 15</value>
+  </data>
+  <data name="lblCredits.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="lblCredits.Text" xml:space="preserve">
+    <value>by Lululla © 2026</value>
+  </data>
+  <data name="&gt;&gt;lblCredits.Name" xml:space="preserve">
+    <value>lblCredits</value>
+  </data>
+  <data name="&gt;&gt;lblCredits.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblCredits.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblCredits.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="lblMode.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 95</value>
+  </data>
+  <data name="lblMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>41, 15</value>
+  </data>
+  <data name="lblMode.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="lblMode.Text" xml:space="preserve">
+    <value>Mode:</value>
+  </data>
+  <data name="&gt;&gt;lblMode.Name" xml:space="preserve">
+    <value>lblMode</value>
+  </data>
+  <data name="&gt;&gt;lblMode.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblMode.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblMode.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="cmbMode.Items" xml:space="preserve">
+    <value>C# Translation Project</value>
+  </data>
+  <data name="cmbMode.Items1" xml:space="preserve">
+    <value>Enigma2 Plugin Manager</value>
+  </data>
+  <data name="cmbMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>81, 92</value>
+  </data>
+  <data name="cmbMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>250, 23</value>
+  </data>
+  <data name="cmbMode.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;cmbMode.Name" xml:space="preserve">
+    <value>cmbMode</value>
+  </data>
+  <data name="&gt;&gt;cmbMode.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ComboBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cmbMode.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;cmbMode.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="lblProject.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblProject.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 10</value>
+  </data>
+  <data name="lblProject.Size" type="System.Drawing.Size, System.Drawing">
+    <value>81, 15</value>
+  </data>
+  <data name="lblProject.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="lblProject.Text" xml:space="preserve">
+    <value>Project folder:</value>
+  </data>
+  <data name="&gt;&gt;lblProject.Name" xml:space="preserve">
+    <value>lblProject</value>
+  </data>
+  <data name="&gt;&gt;lblProject.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblProject.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;lblProject.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="txtProjectPath.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 30</value>
+  </data>
+  <data name="txtProjectPath.Size" type="System.Drawing.Size, System.Drawing">
+    <value>700, 23</value>
+  </data>
+  <data name="txtProjectPath.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;txtProjectPath.Name" xml:space="preserve">
+    <value>txtProjectPath</value>
+  </data>
+  <data name="&gt;&gt;txtProjectPath.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;txtProjectPath.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;txtProjectPath.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="btnBrowseProject.Location" type="System.Drawing.Point, System.Drawing">
+    <value>730, 28</value>
+  </data>
+  <data name="btnBrowseProject.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 27</value>
+  </data>
+  <data name="btnBrowseProject.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="btnBrowseProject.Text" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseProject.Name" xml:space="preserve">
+    <value>btnBrowseProject</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseProject.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseProject.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseProject.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="lblOutput.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblOutput.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 79</value>
+  </data>
+  <data name="lblOutput.Size" type="System.Drawing.Size, System.Drawing">
+    <value>82, 15</value>
+  </data>
+  <data name="lblOutput.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="lblOutput.Text" xml:space="preserve">
+    <value>Output folder:</value>
+  </data>
+  <data name="&gt;&gt;lblOutput.Name" xml:space="preserve">
+    <value>lblOutput</value>
+  </data>
+  <data name="&gt;&gt;lblOutput.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblOutput.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;lblOutput.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="txtOutputPath.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="txtOutputPath.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 105</value>
+  </data>
+  <data name="txtOutputPath.Size" type="System.Drawing.Size, System.Drawing">
+    <value>700, 23</value>
+  </data>
+  <data name="txtOutputPath.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;txtOutputPath.Name" xml:space="preserve">
+    <value>txtOutputPath</value>
+  </data>
+  <data name="&gt;&gt;txtOutputPath.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;txtOutputPath.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;txtOutputPath.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="btnBrowseOutput.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnBrowseOutput.Location" type="System.Drawing.Point, System.Drawing">
+    <value>730, 101</value>
+  </data>
+  <data name="btnBrowseOutput.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 27</value>
+  </data>
+  <data name="btnBrowseOutput.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="btnBrowseOutput.Text" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseOutput.Name" xml:space="preserve">
+    <value>btnBrowseOutput</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseOutput.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseOutput.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnBrowseOutput.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="chkUseOutput.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="chkUseOutput.Location" type="System.Drawing.Point, System.Drawing">
+    <value>163, 75</value>
+  </data>
+  <data name="chkUseOutput.Size" type="System.Drawing.Size, System.Drawing">
+    <value>163, 19</value>
+  </data>
+  <data name="chkUseOutput.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="chkUseOutput.Text" xml:space="preserve">
+    <value>Use custom Output folder</value>
+  </data>
+  <data name="&gt;&gt;chkUseOutput.Name" xml:space="preserve">
+    <value>chkUseOutput</value>
+  </data>
+  <data name="&gt;&gt;chkUseOutput.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;chkUseOutput.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;chkUseOutput.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="btnSelectLanguages.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 150</value>
+  </data>
+  <data name="btnSelectLanguages.Size" type="System.Drawing.Size, System.Drawing">
+    <value>130, 30</value>
+  </data>
+  <data name="btnSelectLanguages.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="btnSelectLanguages.Text" xml:space="preserve">
+    <value>Select Languages</value>
+  </data>
+  <data name="&gt;&gt;btnSelectLanguages.Name" xml:space="preserve">
+    <value>btnSelectLanguages</value>
+  </data>
+  <data name="&gt;&gt;btnSelectLanguages.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnSelectLanguages.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnSelectLanguages.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="btnStart.Location" type="System.Drawing.Point, System.Drawing">
+    <value>317, 150</value>
+  </data>
+  <data name="btnStart.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnStart.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="btnStart.Text" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="&gt;&gt;btnStart.Name" xml:space="preserve">
+    <value>btnStart</value>
+  </data>
+  <data name="&gt;&gt;btnStart.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnStart.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnStart.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="btnStop.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnStop.Location" type="System.Drawing.Point, System.Drawing">
+    <value>423, 150</value>
+  </data>
+  <data name="btnStop.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnStop.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="btnStop.Text" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="&gt;&gt;btnStop.Name" xml:space="preserve">
+    <value>btnStop</value>
+  </data>
+  <data name="&gt;&gt;btnStop.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnStop.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnStop.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <data name="progressBar.Location" type="System.Drawing.Point, System.Drawing">
+    <value>240, 229</value>
+  </data>
+  <data name="progressBar.Size" type="System.Drawing.Size, System.Drawing">
+    <value>400, 20</value>
+  </data>
+  <data name="progressBar.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="progressBar.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;progressBar.Name" xml:space="preserve">
+    <value>progressBar</value>
+  </data>
+  <data name="&gt;&gt;progressBar.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ProgressBar, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;progressBar.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;progressBar.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <data name="panelProjectMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 125</value>
+  </data>
+  <data name="panelProjectMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>950, 270</value>
+  </data>
+  <data name="panelProjectMode.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="panelProjectMode.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;panelProjectMode.Name" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;panelProjectMode.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;panelProjectMode.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;panelProjectMode.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="lblPluginPath.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblPluginPath.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 10</value>
+  </data>
+  <data name="lblPluginPath.Size" type="System.Drawing.Size, System.Drawing">
+    <value>78, 15</value>
+  </data>
+  <data name="lblPluginPath.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="lblPluginPath.Text" xml:space="preserve">
+    <value>Plugin folder:</value>
+  </data>
+  <data name="&gt;&gt;lblPluginPath.Name" xml:space="preserve">
+    <value>lblPluginPath</value>
+  </data>
+  <data name="&gt;&gt;lblPluginPath.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblPluginPath.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblPluginPath.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="txtPluginPath.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 30</value>
+  </data>
+  <data name="txtPluginPath.Size" type="System.Drawing.Size, System.Drawing">
+    <value>700, 23</value>
+  </data>
+  <data name="txtPluginPath.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;txtPluginPath.Name" xml:space="preserve">
+    <value>txtPluginPath</value>
+  </data>
+  <data name="&gt;&gt;txtPluginPath.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;txtPluginPath.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;txtPluginPath.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="btnBrowsePlugin.Location" type="System.Drawing.Point, System.Drawing">
+    <value>730, 28</value>
+  </data>
+  <data name="btnBrowsePlugin.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 27</value>
+  </data>
+  <data name="btnBrowsePlugin.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="btnBrowsePlugin.Text" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="&gt;&gt;btnBrowsePlugin.Name" xml:space="preserve">
+    <value>btnBrowsePlugin</value>
+  </data>
+  <data name="&gt;&gt;btnBrowsePlugin.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnBrowsePlugin.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnBrowsePlugin.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="txtPluginName.Location" type="System.Drawing.Point, System.Drawing">
+    <value>455, 203</value>
+  </data>
+  <data name="txtPluginName.PlaceholderText" xml:space="preserve">
+    <value>Leave empty for folder name</value>
+  </data>
+  <data name="txtPluginName.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 23</value>
+  </data>
+  <data name="txtPluginName.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;txtPluginName.Name" xml:space="preserve">
+    <value>txtPluginName</value>
+  </data>
+  <data name="&gt;&gt;txtPluginName.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;txtPluginName.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;txtPluginName.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="lblPluginName.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblPluginName.Location" type="System.Drawing.Point, System.Drawing">
+    <value>317, 211</value>
+  </data>
+  <data name="lblPluginName.Size" type="System.Drawing.Size, System.Drawing">
+    <value>132, 15</value>
+  </data>
+  <data name="lblPluginName.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="lblPluginName.Text" xml:space="preserve">
+    <value>Plugin name (optional):</value>
+  </data>
+  <data name="&gt;&gt;lblPluginName.Name" xml:space="preserve">
+    <value>lblPluginName</value>
+  </data>
+  <data name="&gt;&gt;lblPluginName.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblPluginName.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblPluginName.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="lblLangs.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblLangs.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 65</value>
+  </data>
+  <data name="lblLangs.Size" type="System.Drawing.Size, System.Drawing">
+    <value>67, 15</value>
+  </data>
+  <data name="lblLangs.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="lblLangs.Text" xml:space="preserve">
+    <value>Languages:</value>
+  </data>
+  <data name="&gt;&gt;lblLangs.Name" xml:space="preserve">
+    <value>lblLangs</value>
+  </data>
+  <data name="&gt;&gt;lblLangs.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblLangs.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblLangs.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="chkLanguages.Location" type="System.Drawing.Point, System.Drawing">
+    <value>14, 83</value>
+  </data>
+  <data name="chkLanguages.Size" type="System.Drawing.Size, System.Drawing">
+    <value>220, 148</value>
+  </data>
+  <data name="chkLanguages.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;chkLanguages.Name" xml:space="preserve">
+    <value>chkLanguages</value>
+  </data>
+  <data name="&gt;&gt;chkLanguages.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;chkLanguages.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;chkLanguages.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="btnSelectAll.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 245</value>
+  </data>
+  <data name="btnSelectAll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 25</value>
+  </data>
+  <data name="btnSelectAll.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="btnSelectAll.Text" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="&gt;&gt;btnSelectAll.Name" xml:space="preserve">
+    <value>btnSelectAll</value>
+  </data>
+  <data name="&gt;&gt;btnSelectAll.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnSelectAll.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnSelectAll.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="btnUnselectAll.Location" type="System.Drawing.Point, System.Drawing">
+    <value>125, 245</value>
+  </data>
+  <data name="btnUnselectAll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 25</value>
+  </data>
+  <data name="btnUnselectAll.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="btnUnselectAll.Text" xml:space="preserve">
+    <value>Unselect All</value>
+  </data>
+  <data name="&gt;&gt;btnUnselectAll.Name" xml:space="preserve">
+    <value>btnUnselectAll</value>
+  </data>
+  <data name="&gt;&gt;btnUnselectAll.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnUnselectAll.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnUnselectAll.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="btnExtract.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnExtract.Location" type="System.Drawing.Point, System.Drawing">
+    <value>270, 85</value>
+  </data>
+  <data name="btnExtract.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnExtract.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="btnExtract.Text" xml:space="preserve">
+    <value>Extract</value>
+  </data>
+  <data name="&gt;&gt;btnExtract.Name" xml:space="preserve">
+    <value>btnExtract</value>
+  </data>
+  <data name="&gt;&gt;btnExtract.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnExtract.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnExtract.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <data name="btnTranslate.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnTranslate.Location" type="System.Drawing.Point, System.Drawing">
+    <value>380, 85</value>
+  </data>
+  <data name="btnTranslate.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnTranslate.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="btnTranslate.Text" xml:space="preserve">
+    <value>Translate</value>
+  </data>
+  <data name="&gt;&gt;btnTranslate.Name" xml:space="preserve">
+    <value>btnTranslate</value>
+  </data>
+  <data name="&gt;&gt;btnTranslate.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnTranslate.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnTranslate.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <data name="btnCompile.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnCompile.Location" type="System.Drawing.Point, System.Drawing">
+    <value>490, 85</value>
+  </data>
+  <data name="btnCompile.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnCompile.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="btnCompile.Text" xml:space="preserve">
+    <value>Compile</value>
+  </data>
+  <data name="&gt;&gt;btnCompile.Name" xml:space="preserve">
+    <value>btnCompile</value>
+  </data>
+  <data name="&gt;&gt;btnCompile.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnCompile.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnCompile.ZOrder" xml:space="preserve">
+    <value>11</value>
+  </data>
+  <data name="btnFullUpdate.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnFullUpdate.Location" type="System.Drawing.Point, System.Drawing">
+    <value>600, 85</value>
+  </data>
+  <data name="btnFullUpdate.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnFullUpdate.TabIndex" type="System.Int32, mscorlib">
+    <value>11</value>
+  </data>
+  <data name="btnFullUpdate.Text" xml:space="preserve">
+    <value>Full Update</value>
+  </data>
+  <data name="&gt;&gt;btnFullUpdate.Name" xml:space="preserve">
+    <value>btnFullUpdate</value>
+  </data>
+  <data name="&gt;&gt;btnFullUpdate.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnFullUpdate.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnFullUpdate.ZOrder" xml:space="preserve">
+    <value>12</value>
+  </data>
+  <data name="btnStopEnigma2.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnStopEnigma2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>710, 85</value>
+  </data>
+  <data name="btnStopEnigma2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnStopEnigma2.TabIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="btnStopEnigma2.Text" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="&gt;&gt;btnStopEnigma2.Name" xml:space="preserve">
+    <value>btnStopEnigma2</value>
+  </data>
+  <data name="&gt;&gt;btnStopEnigma2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnStopEnigma2.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnStopEnigma2.ZOrder" xml:space="preserve">
+    <value>13</value>
+  </data>
+  <data name="progressBarEnigma2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>240, 349</value>
+  </data>
+  <data name="progressBarEnigma2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>400, 20</value>
+  </data>
+  <data name="progressBarEnigma2.TabIndex" type="System.Int32, mscorlib">
+    <value>17</value>
+  </data>
+  <data name="progressBarEnigma2.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;progressBarEnigma2.Name" xml:space="preserve">
+    <value>progressBarEnigma2</value>
+  </data>
+  <data name="&gt;&gt;progressBarEnigma2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ProgressBar, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;progressBarEnigma2.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;progressBarEnigma2.ZOrder" xml:space="preserve">
+    <value>14</value>
+  </data>
+  <data name="lblStatus.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt, style=Bold</value>
+  </data>
+  <data name="lblStatus.Location" type="System.Drawing.Point, System.Drawing">
+    <value>14, 376</value>
+  </data>
+  <data name="lblStatus.Size" type="System.Drawing.Size, System.Drawing">
+    <value>920, 20</value>
+  </data>
+  <data name="lblStatus.TabIndex" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="lblStatus.Text" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="lblStatus.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleLeft</value>
+  </data>
+  <data name="&gt;&gt;lblStatus.Name" xml:space="preserve">
+    <value>lblStatus</value>
+  </data>
+  <data name="&gt;&gt;lblStatus.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblStatus.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblStatus.ZOrder" xml:space="preserve">
+    <value>15</value>
+  </data>
+  <data name="lblCounter.Location" type="System.Drawing.Point, System.Drawing">
+    <value>18, 348</value>
+  </data>
+  <data name="lblCounter.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 20</value>
+  </data>
+  <data name="lblCounter.TabIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="lblCounter.Text" xml:space="preserve">
+    <value>0 / 0</value>
+  </data>
+  <data name="&gt;&gt;lblCounter.Name" xml:space="preserve">
+    <value>lblCounter</value>
+  </data>
+  <data name="&gt;&gt;lblCounter.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblCounter.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblCounter.ZOrder" xml:space="preserve">
+    <value>16</value>
+  </data>
+  <data name="lblTimer.Location" type="System.Drawing.Point, System.Drawing">
+    <value>758, 348</value>
+  </data>
+  <data name="lblTimer.Size" type="System.Drawing.Size, System.Drawing">
+    <value>150, 20</value>
+  </data>
+  <data name="lblTimer.TabIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="lblTimer.Text" xml:space="preserve">
+    <value>00:00</value>
+  </data>
+  <data name="&gt;&gt;lblTimer.Name" xml:space="preserve">
+    <value>lblTimer</value>
+  </data>
+  <data name="&gt;&gt;lblTimer.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblTimer.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;lblTimer.ZOrder" xml:space="preserve">
+    <value>17</value>
+  </data>
+  <data name="panelEnigma2Mode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 125</value>
+  </data>
+  <data name="panelEnigma2Mode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>950, 405</value>
+  </data>
+  <data name="panelEnigma2Mode.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="panelEnigma2Mode.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;panelEnigma2Mode.Name" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;panelEnigma2Mode.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;panelEnigma2Mode.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;panelEnigma2Mode.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="btnClearLog.Location" type="System.Drawing.Point, System.Drawing">
+    <value>694, 536</value>
+  </data>
+  <data name="btnClearLog.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnClearLog.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="btnClearLog.Text" xml:space="preserve">
+    <value>Clear Log</value>
+  </data>
+  <data name="&gt;&gt;btnClearLog.Name" xml:space="preserve">
+    <value>btnClearLog</value>
+  </data>
+  <data name="&gt;&gt;btnClearLog.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnClearLog.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;btnClearLog.ZOrder" xml:space="preserve">
+    <value>14</value>
+  </data>
+  <data name="btnSaveLog.Location" type="System.Drawing.Point, System.Drawing">
+    <value>588, 536</value>
+  </data>
+  <data name="btnSaveLog.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnSaveLog.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="btnSaveLog.Text" xml:space="preserve">
+    <value>Save Log</value>
+  </data>
+  <data name="&gt;&gt;btnSaveLog.Name" xml:space="preserve">
+    <value>btnSaveLog</value>
+  </data>
+  <data name="&gt;&gt;btnSaveLog.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnSaveLog.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;btnSaveLog.ZOrder" xml:space="preserve">
+    <value>13</value>
+  </data>
+  <data name="lblMonitor.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lblMonitor.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt, style=Bold</value>
+  </data>
+  <data name="lblMonitor.Location" type="System.Drawing.Point, System.Drawing">
+    <value>16, 551</value>
+  </data>
+  <data name="lblMonitor.Size" type="System.Drawing.Size, System.Drawing">
+    <value>67, 15</value>
+  </data>
+  <data name="lblMonitor.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="lblMonitor.Text" xml:space="preserve">
+    <value>MONITOR:</value>
+  </data>
+  <data name="&gt;&gt;lblMonitor.Name" xml:space="preserve">
+    <value>lblMonitor</value>
+  </data>
+  <data name="&gt;&gt;lblMonitor.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lblMonitor.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;lblMonitor.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="rtxtLog.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Bottom, Left, Right</value>
+  </data>
+  <data name="rtxtLog.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Consolas, 9pt</value>
+  </data>
+  <data name="rtxtLog.Location" type="System.Drawing.Point, System.Drawing">
+    <value>15, 569</value>
+  </data>
+  <data name="rtxtLog.Size" type="System.Drawing.Size, System.Drawing">
+    <value>920, 219</value>
+  </data>
+  <data name="rtxtLog.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="rtxtLog.Text" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rtxtLog.Name" xml:space="preserve">
+    <value>rtxtLog</value>
+  </data>
+  <data name="&gt;&gt;rtxtLog.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;rtxtLog.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;rtxtLog.ZOrder" xml:space="preserve">
+    <value>11</value>
+  </data>
+  <data name="picLogo.Location" type="System.Drawing.Point, System.Drawing">
+    <value>746, 35</value>
+  </data>
+  <data name="picLogo.Size" type="System.Drawing.Size, System.Drawing">
+    <value>150, 75</value>
+  </data>
+  <data name="picLogo.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
+    <value>Zoom</value>
+  </data>
+  <data name="picLogo.TabIndex" type="System.Int32, mscorlib">
+    <value>99</value>
+  </data>
+  <data name="&gt;&gt;picLogo.Name" xml:space="preserve">
+    <value>picLogo</value>
+  </data>
+  <data name="&gt;&gt;picLogo.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;picLogo.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;picLogo.ZOrder" xml:space="preserve">
+    <value>12</value>
+  </data>
+  <data name="chkUseCacheGlobal.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="chkUseCacheGlobal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>350, 92</value>
+  </data>
+  <data name="chkUseCacheGlobal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>81, 19</value>
+  </data>
+  <data name="chkUseCacheGlobal.TabIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="chkUseCacheGlobal.Text" xml:space="preserve">
+    <value>Use Cache</value>
+  </data>
+  <data name="&gt;&gt;chkUseCacheGlobal.Name" xml:space="preserve">
+    <value>chkUseCacheGlobal</value>
+  </data>
+  <data name="&gt;&gt;chkUseCacheGlobal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;chkUseCacheGlobal.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;chkUseCacheGlobal.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="btnDeleteCacheGlobal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>460, 88</value>
+  </data>
+  <data name="btnDeleteCacheGlobal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnDeleteCacheGlobal.TabIndex" type="System.Int32, mscorlib">
+    <value>22</value>
+  </data>
+  <data name="btnDeleteCacheGlobal.Text" xml:space="preserve">
+    <value>Delete Cache</value>
+  </data>
+  <data name="&gt;&gt;btnDeleteCacheGlobal.Name" xml:space="preserve">
+    <value>btnDeleteCacheGlobal</value>
+  </data>
+  <data name="&gt;&gt;btnDeleteCacheGlobal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnDeleteCacheGlobal.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;btnDeleteCacheGlobal.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="btnImportCacheGlobal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>570, 88</value>
+  </data>
+  <data name="btnImportCacheGlobal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnImportCacheGlobal.TabIndex" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="btnImportCacheGlobal.Text" xml:space="preserve">
+    <value>Import Cache</value>
+  </data>
+  <data name="&gt;&gt;btnImportCacheGlobal.Name" xml:space="preserve">
+    <value>btnImportCacheGlobal</value>
+  </data>
+  <data name="&gt;&gt;btnImportCacheGlobal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnImportCacheGlobal.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;btnImportCacheGlobal.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>950, 800</value>
+  </data>
+  <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
+  </data>
+  <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
+    <value>950, 400</value>
+  </data>
+  <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
+    <value>CenterScreen</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Translation Tool</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>Form1</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

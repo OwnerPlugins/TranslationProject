@@ -270,12 +270,11 @@ namespace TranslationProject
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            // 1. PROTECT escape sequences AND quotes
+            // 1. Protect escape sequences AND quotes
             var escapeMap = new Dictionary<string, string>();
             string protectedText = text;
             int idx = 0;
 
-            // Proteggi \n, \t, \r, \", \\
             var escapeRegex = new Regex(@"\\[ntr\""]|\\\\");
             protectedText = escapeRegex.Replace(protectedText, match =>
             {
@@ -285,11 +284,10 @@ namespace TranslationProject
                 return placeholder;
             });
 
-            // Proteggi le virgolette doppie (se non sono già state protette dall'escape)
             protectedText = protectedText.Replace("\"", "__QUOTE__");
             escapeMap["__QUOTE__"] = "\\\"";
 
-            // 2. Cache
+            // 2. Cache check
             if (_useCache)
             {
                 string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
@@ -300,43 +298,67 @@ namespace TranslationProject
                 }
             }
 
-            // 3. Translate
+            // 3. Translate with retry
             string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
 
-            try
+            int maxRetries = 3;
+            int delay = 1000; // milliseconds
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                var response = await _httpClient.GetAsync(url, linked.Token);
-                string resp = await response.Content.ReadAsStringAsync(linked.Token);
-                var json = JArray.Parse(resp);
-
-                string translated = "";
-                if (json[0] is JArray arr)
+                try
                 {
-                    foreach (var item in arr)
-                        if (item[0] != null)
-                            translated += item[0].ToString();
-                }
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
 
-                if (!string.IsNullOrEmpty(translated))
-                {
-                    translated = CleanWhitespace(translated);
-                    translated = RestoreEscapes(translated, escapeMap);
+                    var response = await _httpClient.GetAsync(url, linked.Token);
+                    string resp = await response.Content.ReadAsStringAsync(linked.Token);
 
-                    if (_useCache)
+                    // Check if response is HTML (starts with <) – indicates error/block
+                    if (resp.TrimStart().StartsWith("<"))
                     {
-                        string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
-                        _cache[cacheKey] = translated;
-                        SaveCache();
+                        _log?.Invoke($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
+                        await Task.Delay(delay * (attempt + 1), token);
+                        continue;
                     }
-                    return translated;
+
+                    var json = JArray.Parse(resp);
+
+                    string translated = "";
+                    if (json[0] is JArray arr)
+                    {
+                        foreach (var item in arr)
+                            if (item[0] != null)
+                                translated += item[0].ToString();
+                    }
+
+                    if (!string.IsNullOrEmpty(translated))
+                    {
+                        translated = CleanWhitespace(translated);
+                        translated = RestoreEscapes(translated, escapeMap);
+
+                        if (_useCache)
+                        {
+                            string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
+                            _cache[cacheKey] = translated;
+                            SaveCache();
+                        }
+                        return translated;
+                    }
+
+                    return text; // No translation returned
+                }
+                catch (Exception ex)
+                {
+                    _log?.Invoke($"Translation error for {targetLang}: {ex.Message}");
+                    if (attempt < maxRetries - 1)
+                    {
+                        await Task.Delay(delay * (attempt + 1), token);
+                    }
                 }
             }
-            catch { }
 
-            return text;
+            return text; // Fallback after all retries
         }
 
         private string RestoreEscapes(string input, Dictionary<string, string> escapeMap)

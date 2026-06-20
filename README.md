@@ -65,11 +65,11 @@
   <tr>
     <td align="center">
       <img src="screen/screen1.png?sanitize=true&raw=true" title="preview1" width="400"/><br/>
-      <b>Preview 1</b>
+      <b>C#</b>
     </td>
     <td align="center">
       <img src="screen/screen2.png?sanitize=true&raw=true" title="preview2" width="400"/><br/>
-      <b>Preview 2</b>
+      <b>Enigma2 Plugin Manager</b>
     </td>
   </tr>
 </table>

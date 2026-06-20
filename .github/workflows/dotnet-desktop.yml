@@ -16,10 +16,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Prende tutta la storia per evitare conflitti
-
-    - name: Pull aggiornamenti
-      run: git pull origin main --rebase
+        fetch-depth: 0
 
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
@@ -49,7 +46,18 @@ jobs:
 
     - name: Commit e push dello zip
       run: |
-        git pull origin main --rebase
+        # Stash delle modifiche locali
+        git stash push -m "workflow-stash" || echo "Nessuna modifica da stashare"
+        
+        # Pull con rebase
+        git pull origin main --rebase || echo "Pull fallito, si procede comunque"
+        
+        # Rimuovi lo zip vecchio e aggiungi quello nuovo
         git add TranslationProject.zip
-        git commit -m "Aggiorna build - ${{ github.run_number }}" || echo "Nessuna modifica"
-        git push origin HEAD:main
+        
+        # Commit solo se ci sono modifiche
+        git commit -m "Aggiorna build - ${{ github.run_number }}" || echo "Nessuna modifica da committare"
+        
+        # Push con force-with-lease per sicurezza
+        git push origin HEAD:main --force-with-lease
+        

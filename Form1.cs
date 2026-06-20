@@ -906,5 +906,10 @@ namespace TranslationProject
             }
             catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }
         }
+
+        private void lblStatus_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

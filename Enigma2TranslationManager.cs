@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 
@@ -187,16 +180,31 @@ namespace TranslationProject
                 
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
                 
+                string translationToWrite;
                 if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
                 {
-                    po.Add($"msgstr \"{EscapeForPo(existingTranslation)}\"");
+                    translationToWrite = existingTranslation;
                 }
                 else
                 {
-                    string translatedText = await TranslateAsync(msgid, targetLang, token);
-                    po.Add($"msgstr \"{EscapeForPo(translatedText)}\"");
+                    translationToWrite = await TranslateAsync(msgid, targetLang, token);
                     translated++;
                 }
+                
+                // FORCE FIX: Ensure \n matching for ALL translations
+                if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
+                {
+                    translationToWrite = "\\n" + translationToWrite;
+                }
+                if (msgid.EndsWith("\\n") && !translationToWrite.EndsWith("\\n"))
+                {
+                    translationToWrite = translationToWrite + "\\n";
+                }
+                
+                // FORCE FIX: Remove invalid backslashes AND escape quotes
+                translationToWrite = EscapeForPo(translationToWrite);
+                
+                po.Add($"msgstr \"{translationToWrite}\"");
                 po.Add("");
             }
 
@@ -210,7 +218,14 @@ namespace TranslationProject
         private string EscapeForPo(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
-            return input.Replace("\"", "\\\"");
+
+            // Escape double quotes
+            string result = input.Replace("\"", "\\\"");
+
+            // Remove invalid backslash sequences
+            result = Regex.Replace(result, @"\\(?![ntr\""\\])", "");
+
+            return result;
         }
 
         public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
@@ -251,61 +266,30 @@ namespace TranslationProject
             _log?.Invoke("=== Update completed ===");
         }
 
-        private string ProtectEscapes(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-
-            // Replace escape sequences with placeholders
-            var map = new Dictionary<string, string>();
-            string result = input;
-            int idx = 0;
-
-            // Match \n, \t, \r, \", \\
-            var regex = new Regex(@"\\[ntr\""]|\\\\");
-            result = regex.Replace(result, match =>
-            {
-                string placeholder = $"__ESC_{idx}__";
-                map[placeholder] = match.Value;
-                idx++;
-                return placeholder;
-            });
-
-            // Store map for later restore
-            _escapeMap = map;
-            return result;
-        }
-
-        private string RestoreEscapes(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-
-            string result = input;
-            foreach (var kvp in _escapeMap)
-            {
-                result = result.Replace(kvp.Key, kvp.Value);
-            }
-            return result;
-        }
-
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            // PROTECT escape sequences BEFORE translation
+            // 1. PROTECT escape sequences AND quotes
             var escapeMap = new Dictionary<string, string>();
             string protectedText = text;
             int idx = 0;
 
+            // Proteggi \n, \t, \r, \", \\
             var escapeRegex = new Regex(@"\\[ntr\""]|\\\\");
             protectedText = escapeRegex.Replace(protectedText, match =>
             {
-                string placeholder = $"__ESC_{idx}__";
+                string placeholder = $"ESC_{idx}";
                 escapeMap[placeholder] = match.Value;
                 idx++;
                 return placeholder;
             });
 
-            // Cache check
+            // Proteggi le virgolette doppie (se non sono già state protette dall'escape)
+            protectedText = protectedText.Replace("\"", "__QUOTE__");
+            escapeMap["__QUOTE__"] = "\\\"";
+
+            // 2. Cache
             if (_useCache)
             {
                 string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
@@ -316,7 +300,7 @@ namespace TranslationProject
                 }
             }
 
-            // Translate
+            // 3. Translate
             string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
 
             try
@@ -357,82 +341,40 @@ namespace TranslationProject
 
         private string RestoreEscapes(string input, Dictionary<string, string> escapeMap)
         {
-            if (string.IsNullOrEmpty(input) || escapeMap == null || escapeMap.Count == 0)
-                return input;
+            if (string.IsNullOrEmpty(input)) return input;
 
             string result = input;
+
+            // 1. Exact replacements
             foreach (var kvp in escapeMap)
             {
                 result = result.Replace(kvp.Key, kvp.Value);
             }
+
+            // 2. Fallback: remove ANY remaining placeholder
+            // Matches: ESC_0, ESC_1, __ESC_0__, ESC__0, etc.
+            result = Regex.Replace(result, @"_*ESC_+\d+_*", match =>
+            {
+                string key = match.Value;
+                if (escapeMap.TryGetValue(key, out string replacement))
+                    return replacement;
+                
+                // If the placeholder is for \n, return newline
+                if (key.Contains("ESC"))
+                {
+                    // Check if this placeholder was for \n
+                    foreach (var kvp in escapeMap)
+                    {
+                        if (kvp.Key == key || kvp.Value == "\\n")
+                            return "\n";
+                    }
+                    return "\n"; // default
+                }
+                return match.Value;
+            });
+
             return result;
         }
-
-/*         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return text;
-
-            var placeholders = new Dictionary<string, string>();
-            int idx = 0;
-            string textWithPlaceholders = text;
-            var placeholderRegex = new Regex(@"\{[^{}]+\}");
-            foreach (Match match in placeholderRegex.Matches(text))
-            {
-                string placeholder = match.Value;
-                string replacement = $"__PH_{idx}__";
-                textWithPlaceholders = textWithPlaceholders.Replace(placeholder, replacement);
-                placeholders[replacement] = placeholder;
-                idx++;
-            }
-
-            if (_useCache)
-            {
-                string key = ComputeMd5($"{targetLang}:{text}");
-                if (_cache.TryGetValue(key, out string cached))
-                {
-                    if (!string.IsNullOrEmpty(cached) && cached != text)
-                        return cached;
-                }
-            }
-
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithPlaceholders)}";
-
-            try
-            {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                var response = await _httpClient.GetAsync(url, linked.Token);
-                string resp = await response.Content.ReadAsStringAsync(linked.Token);
-                var json = JArray.Parse(resp);
-
-                string translated = "";
-                if (json[0] is JArray arr)
-                {
-                    foreach (var item in arr)
-                        if (item[0] != null)
-                            translated += item[0].ToString();
-                }
-
-                if (!string.IsNullOrEmpty(translated))
-                {
-                    translated = CleanWhitespace(translated);
-                    foreach (var kvp in placeholders)
-                        translated = translated.Replace(kvp.Key, kvp.Value);
-
-                    if (_useCache)
-                    {
-                        string key = ComputeMd5($"{targetLang}:{text}");
-                        _cache[key] = translated;
-                        SaveCache();
-                    }
-                    return translated;
-                }
-            }
-            catch { }
-
-            return text;
-        } */
 
         private string Escape(string input)
         {

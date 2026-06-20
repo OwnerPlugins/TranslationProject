@@ -84,8 +84,7 @@ namespace TranslationProject
             lblVersion.Name = "lblVersion";
             lblVersion.Size = new Size(214, 15);
             lblVersion.TabIndex = 1;
-            var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "2.2";
-            lblVersion.Text = $"Version {version} - Extract, Translate, Compile";
+            lblVersion.Text = "Version 2.2 - Extract, Translate, Compile";
             // 
             // lblCredits
             // 
@@ -99,7 +98,7 @@ namespace TranslationProject
             // lblMode
             // 
             lblMode.AutoSize = true;
-            lblMode.Location = new Point(15, 90);
+            lblMode.Location = new Point(15, 95);
             lblMode.Name = "lblMode";
             lblMode.Size = new Size(41, 15);
             lblMode.TabIndex = 3;
@@ -109,7 +108,7 @@ namespace TranslationProject
             // 
             cmbMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMode.Items.AddRange(new object[] { "C# Translation Project", "Enigma2 Plugin Manager" });
-            cmbMode.Location = new Point(80, 87);
+            cmbMode.Location = new Point(81, 92);
             cmbMode.Name = "cmbMode";
             cmbMode.Size = new Size(250, 23);
             cmbMode.TabIndex = 4;
@@ -267,7 +266,7 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(lblTimer);
             panelEnigma2Mode.Location = new Point(0, 125);
             panelEnigma2Mode.Name = "panelEnigma2Mode";
-            panelEnigma2Mode.Size = new Size(950, 405);
+            panelEnigma2Mode.Size = new Size(950, 412);
             panelEnigma2Mode.TabIndex = 6;
             panelEnigma2Mode.Visible = false;
             // 
@@ -353,7 +352,7 @@ namespace TranslationProject
             chkUseCache.AutoSize = true;
             chkUseCache.Checked = true;
             chkUseCache.CheckState = CheckState.Checked;
-            chkUseCache.Location = new Point(18, 280);
+            chkUseCache.Location = new Point(250, 251);
             chkUseCache.Name = "chkUseCache";
             chkUseCache.Size = new Size(81, 19);
             chkUseCache.TabIndex = 7;
@@ -463,7 +462,7 @@ namespace TranslationProject
             // 
             // progressBarEnigma2
             // 
-            progressBarEnigma2.Location = new Point(18, 320);
+            progressBarEnigma2.Location = new Point(18, 293);
             progressBarEnigma2.Name = "progressBarEnigma2";
             progressBarEnigma2.Size = new Size(850, 20);
             progressBarEnigma2.TabIndex = 17;
@@ -473,11 +472,13 @@ namespace TranslationProject
             // 
             lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblStatus.ForeColor = Color.DarkGreen;
-            lblStatus.Location = new Point(18, 350);
+            lblStatus.Location = new Point(18, 338);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(850, 20);
             lblStatus.TabIndex = 18;
             lblStatus.Text = "Ready";
+            lblStatus.TextAlign = ContentAlignment.MiddleLeft;
+            lblStatus.Click += lblStatus_Click;
             // 
             // lblCounter
             // 
@@ -490,7 +491,7 @@ namespace TranslationProject
             // lblTimer
             // 
             lblTimer.ForeColor = Color.DarkRed;
-            lblTimer.Location = new Point(250, 375);
+            lblTimer.Location = new Point(270, 375);
             lblTimer.Name = "lblTimer";
             lblTimer.Size = new Size(150, 20);
             lblTimer.TabIndex = 20;
@@ -524,7 +525,7 @@ namespace TranslationProject
             // 
             picLogo.BackColor = Color.Transparent;
             picLogo.Cursor = Cursors.Hand;
-            picLogo.Location = new Point(780, 12);
+            picLogo.Location = new Point(746, 35);
             picLogo.Name = "picLogo";
             picLogo.Size = new Size(150, 75);
             picLogo.SizeMode = PictureBoxSizeMode.Zoom;

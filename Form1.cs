@@ -874,6 +874,7 @@ namespace TranslationProject
                 Log($"[{current}/{total}] {lang.Value}");
                 UpdateProgress(current);
                 await ProcessLanguageAsync(lang.Key, lang.Value, keys, token);
+                SaveCache();
             }
 
             EndOperation("Translation completed.", Color.DarkGreen);

@@ -1,7 +1,7 @@
-﻿using System.Text;
+﻿using Newtonsoft.Json.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Newtonsoft.Json.Linq;
 
 
 namespace TranslationProject
@@ -177,9 +177,9 @@ namespace TranslationProject
             foreach (var msgid in msgids)
             {
                 token.ThrowIfCancellationRequested();
-                
+
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
-                
+
                 string translationToWrite;
                 if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
                 {
@@ -190,7 +190,7 @@ namespace TranslationProject
                     translationToWrite = await TranslateAsync(msgid, targetLang, token);
                     translated++;
                 }
-                
+
                 // FORCE FIX: Ensure \n matching for ALL translations
                 if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
                 {
@@ -200,10 +200,10 @@ namespace TranslationProject
                 {
                     translationToWrite = translationToWrite + "\\n";
                 }
-                
+
                 // FORCE FIX: Remove invalid backslashes AND escape quotes
                 translationToWrite = EscapeForPo(translationToWrite);
-                
+
                 po.Add($"msgstr \"{translationToWrite}\"");
                 po.Add("");
             }
@@ -380,7 +380,7 @@ namespace TranslationProject
                 string key = match.Value;
                 if (escapeMap.TryGetValue(key, out string replacement))
                     return replacement;
-                
+
                 // If the placeholder is for \n, return newline
                 if (key.Contains("ESC"))
                 {

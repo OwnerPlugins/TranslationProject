@@ -264,7 +264,7 @@
     <value>True</value>
   </data>
   <data name="lblProject.Location" type="System.Drawing.Point, System.Drawing">
-    <value>15, 10</value>
+    <value>16, 10</value>
   </data>
   <data name="lblProject.Size" type="System.Drawing.Size, System.Drawing">
     <value>81, 15</value>
@@ -336,7 +336,7 @@
     <value>True</value>
   </data>
   <data name="lblOutput.Location" type="System.Drawing.Point, System.Drawing">
-    <value>15, 79</value>
+    <value>15, 87</value>
   </data>
   <data name="lblOutput.Size" type="System.Drawing.Size, System.Drawing">
     <value>82, 15</value>
@@ -363,7 +363,7 @@
     <value>False</value>
   </data>
   <data name="txtOutputPath.Location" type="System.Drawing.Point, System.Drawing">
-    <value>18, 105</value>
+    <value>18, 113</value>
   </data>
   <data name="txtOutputPath.Size" type="System.Drawing.Size, System.Drawing">
     <value>700, 23</value>
@@ -387,7 +387,7 @@
     <value>False</value>
   </data>
   <data name="btnBrowseOutput.Location" type="System.Drawing.Point, System.Drawing">
-    <value>730, 101</value>
+    <value>730, 109</value>
   </data>
   <data name="btnBrowseOutput.Size" type="System.Drawing.Size, System.Drawing">
     <value>80, 27</value>
@@ -414,7 +414,7 @@
     <value>True</value>
   </data>
   <data name="chkUseOutput.Location" type="System.Drawing.Point, System.Drawing">
-    <value>163, 75</value>
+    <value>18, 61</value>
   </data>
   <data name="chkUseOutput.Size" type="System.Drawing.Size, System.Drawing">
     <value>163, 19</value>
@@ -438,7 +438,7 @@
     <value>6</value>
   </data>
   <data name="btnSelectLanguages.Location" type="System.Drawing.Point, System.Drawing">
-    <value>18, 150</value>
+    <value>18, 158</value>
   </data>
   <data name="btnSelectLanguages.Size" type="System.Drawing.Size, System.Drawing">
     <value>130, 30</value>
@@ -462,7 +462,7 @@
     <value>7</value>
   </data>
   <data name="btnStart.Location" type="System.Drawing.Point, System.Drawing">
-    <value>317, 150</value>
+    <value>318, 158</value>
   </data>
   <data name="btnStart.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -485,11 +485,38 @@
   <data name="&gt;&gt;btnStart.ZOrder" xml:space="preserve">
     <value>8</value>
   </data>
+  <data name="btnPause.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnPause.Location" type="System.Drawing.Point, System.Drawing">
+    <value>419, 158</value>
+  </data>
+  <data name="btnPause.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnPause.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="btnPause.Text" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="&gt;&gt;btnPause.Name" xml:space="preserve">
+    <value>btnPause</value>
+  </data>
+  <data name="&gt;&gt;btnPause.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnPause.Parent" xml:space="preserve">
+    <value>panelProjectMode</value>
+  </data>
+  <data name="&gt;&gt;btnPause.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
   <data name="btnStop.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="btnStop.Location" type="System.Drawing.Point, System.Drawing">
-    <value>423, 150</value>
+    <value>519, 158</value>
   </data>
   <data name="btnStop.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -510,10 +537,10 @@
     <value>panelProjectMode</value>
   </data>
   <data name="&gt;&gt;btnStop.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>10</value>
   </data>
   <data name="progressBar.Location" type="System.Drawing.Point, System.Drawing">
-    <value>240, 229</value>
+    <value>272, 229</value>
   </data>
   <data name="progressBar.Size" type="System.Drawing.Size, System.Drawing">
     <value>400, 20</value>
@@ -534,13 +561,13 @@
     <value>panelProjectMode</value>
   </data>
   <data name="&gt;&gt;progressBar.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>11</value>
   </data>
   <data name="panelProjectMode.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 125</value>
   </data>
   <data name="panelProjectMode.Size" type="System.Drawing.Size, System.Drawing">
-    <value>950, 270</value>
+    <value>950, 299</value>
   </data>
   <data name="panelProjectMode.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -633,7 +660,7 @@
     <value>2</value>
   </data>
   <data name="txtPluginName.Location" type="System.Drawing.Point, System.Drawing">
-    <value>455, 203</value>
+    <value>545, 203</value>
   </data>
   <data name="txtPluginName.PlaceholderText" xml:space="preserve">
     <value>Leave empty for folder name</value>
@@ -660,16 +687,19 @@
     <value>True</value>
   </data>
   <data name="lblPluginName.Location" type="System.Drawing.Point, System.Drawing">
-    <value>317, 211</value>
+    <value>316, 206</value>
   </data>
   <data name="lblPluginName.Size" type="System.Drawing.Size, System.Drawing">
-    <value>132, 15</value>
+    <value>222, 15</value>
   </data>
   <data name="lblPluginName.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
   </data>
   <data name="lblPluginName.Text" xml:space="preserve">
-    <value>Plugin name (optional):</value>
+    <value>Plugin Domain auto-detected (optional):</value>
+  </data>
+  <data name="lblPluginName.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>TopRight</value>
   </data>
   <data name="&gt;&gt;lblPluginName.Name" xml:space="preserve">
     <value>lblPluginName</value>
@@ -1201,7 +1231,7 @@
     <value>7</value>
   </data>
   <data name="btnDeleteCacheGlobal.Location" type="System.Drawing.Point, System.Drawing">
-    <value>460, 88</value>
+    <value>540, 87</value>
   </data>
   <data name="btnDeleteCacheGlobal.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -1225,7 +1255,7 @@
     <value>8</value>
   </data>
   <data name="btnImportCacheGlobal.Location" type="System.Drawing.Point, System.Drawing">
-    <value>570, 88</value>
+    <value>437, 87</value>
   </data>
   <data name="btnImportCacheGlobal.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>

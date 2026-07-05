@@ -33,6 +33,7 @@ namespace TranslationProject
             chkUseOutput = new CheckBox();
             btnSelectLanguages = new Button();
             btnStart = new Button();
+            btnPause = new Button();
             btnStop = new Button();
             progressBar = new ProgressBar();
             panelEnigma2Mode = new Panel();
@@ -66,37 +67,38 @@ namespace TranslationProject
             panelEnigma2Mode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picLogo).BeginInit();
             SuspendLayout();
-            //
+            // 
             // lblHeader
-            //
+            // 
             resources.ApplyResources(lblHeader, "lblHeader");
             lblHeader.Name = "lblHeader";
-            //
+            // 
             // lblVersion
-            //
+            // 
             resources.ApplyResources(lblVersion, "lblVersion");
             lblVersion.Name = "lblVersion";
-            //
+            lblVersion.Click += lblVersion_Click;
+            // 
             // lblCredits
-            //
+            // 
             resources.ApplyResources(lblCredits, "lblCredits");
             lblCredits.Name = "lblCredits";
-            //
+            // 
             // lblMode
-            //
+            // 
             resources.ApplyResources(lblMode, "lblMode");
             lblMode.Name = "lblMode";
-            //
+            // 
             // cmbMode
-            //
+            // 
             cmbMode.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMode.Items.AddRange(new object[] { resources.GetString("cmbMode.Items"), resources.GetString("cmbMode.Items1") });
             resources.ApplyResources(cmbMode, "cmbMode");
             cmbMode.Name = "cmbMode";
             cmbMode.SelectedIndexChanged += CmbMode_SelectedIndexChanged;
-            //
+            // 
             // panelProjectMode
-            //
+            // 
             panelProjectMode.Controls.Add(lblProject);
             panelProjectMode.Controls.Add(txtProjectPath);
             panelProjectMode.Controls.Add(btnBrowseProject);
@@ -106,80 +108,89 @@ namespace TranslationProject
             panelProjectMode.Controls.Add(chkUseOutput);
             panelProjectMode.Controls.Add(btnSelectLanguages);
             panelProjectMode.Controls.Add(btnStart);
+            panelProjectMode.Controls.Add(btnPause);
             panelProjectMode.Controls.Add(btnStop);
             panelProjectMode.Controls.Add(progressBar);
             resources.ApplyResources(panelProjectMode, "panelProjectMode");
             panelProjectMode.Name = "panelProjectMode";
-            //
+            // 
             // lblProject
-            //
+            // 
             resources.ApplyResources(lblProject, "lblProject");
             lblProject.Name = "lblProject";
-            //
+            // 
             // txtProjectPath
-            //
+            // 
             resources.ApplyResources(txtProjectPath, "txtProjectPath");
             txtProjectPath.Name = "txtProjectPath";
-            //
+            // 
             // btnBrowseProject
-            //
+            // 
             resources.ApplyResources(btnBrowseProject, "btnBrowseProject");
             btnBrowseProject.Name = "btnBrowseProject";
             btnBrowseProject.Click += BtnBrowseProject_Click;
-            //
+            // 
             // lblOutput
-            //
+            // 
             resources.ApplyResources(lblOutput, "lblOutput");
             lblOutput.Name = "lblOutput";
-            //
+            // 
             // txtOutputPath
-            //
+            // 
             resources.ApplyResources(txtOutputPath, "txtOutputPath");
             txtOutputPath.Name = "txtOutputPath";
-            //
+            // 
             // btnBrowseOutput
-            //
+            // 
             resources.ApplyResources(btnBrowseOutput, "btnBrowseOutput");
             btnBrowseOutput.Name = "btnBrowseOutput";
             btnBrowseOutput.Click += BtnBrowseOutput_Click;
-            //
+            // 
             // chkUseOutput
-            //
+            // 
             resources.ApplyResources(chkUseOutput, "chkUseOutput");
             chkUseOutput.Name = "chkUseOutput";
             chkUseOutput.CheckedChanged += ChkUseOutput_CheckedChanged;
-            //
+            // 
             // btnSelectLanguages
-            //
+            // 
             btnSelectLanguages.BackColor = Color.LightBlue;
             resources.ApplyResources(btnSelectLanguages, "btnSelectLanguages");
             btnSelectLanguages.Name = "btnSelectLanguages";
             btnSelectLanguages.UseVisualStyleBackColor = false;
             btnSelectLanguages.Click += BtnSelectLanguages_Click;
-            //
+            // 
             // btnStart
-            //
+            // 
             btnStart.BackColor = Color.LightGreen;
             resources.ApplyResources(btnStart, "btnStart");
             btnStart.Name = "btnStart";
             btnStart.UseVisualStyleBackColor = false;
             btnStart.Click += BtnStart_Click;
-            //
+            // 
+            // btnPause
+            // 
+            btnPause.BackColor = Color.Yellow;
+            resources.ApplyResources(btnPause, "btnPause");
+            btnPause.Name = "btnPause";
+            btnPause.UseVisualStyleBackColor = false;
+            btnPause.Click += BtnPause_Click;
+            // 
             // btnStop
-            //
+            // 
             btnStop.BackColor = Color.LightCoral;
             resources.ApplyResources(btnStop, "btnStop");
             btnStop.Name = "btnStop";
             btnStop.UseVisualStyleBackColor = false;
             btnStop.Click += BtnStop_Click;
-            //
+            // 
             // progressBar
-            //
+            // 
             resources.ApplyResources(progressBar, "progressBar");
             progressBar.Name = "progressBar";
-            //
+            // 
             // panelEnigma2Mode
-            //
+            // 
             panelEnigma2Mode.Controls.Add(lblPluginPath);
             panelEnigma2Mode.Controls.Add(txtPluginPath);
             panelEnigma2Mode.Controls.Add(btnBrowsePlugin);
@@ -200,185 +211,184 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(lblTimer);
             resources.ApplyResources(panelEnigma2Mode, "panelEnigma2Mode");
             panelEnigma2Mode.Name = "panelEnigma2Mode";
-            //
+            // 
             // lblPluginPath
-            //
+            // 
             resources.ApplyResources(lblPluginPath, "lblPluginPath");
             lblPluginPath.Name = "lblPluginPath";
-            //
+            // 
             // txtPluginPath
-            //
+            // 
             resources.ApplyResources(txtPluginPath, "txtPluginPath");
             txtPluginPath.Name = "txtPluginPath";
-            //
+            // 
             // btnBrowsePlugin
-            //
+            // 
             resources.ApplyResources(btnBrowsePlugin, "btnBrowsePlugin");
             btnBrowsePlugin.Name = "btnBrowsePlugin";
             btnBrowsePlugin.Click += BtnBrowsePlugin_Click;
-            //
+            // 
             // txtPluginName
-            //
+            // 
             resources.ApplyResources(txtPluginName, "txtPluginName");
             txtPluginName.Name = "txtPluginName";
-            //
+            // 
             // lblPluginName
-            //
+            // 
             resources.ApplyResources(lblPluginName, "lblPluginName");
             lblPluginName.Name = "lblPluginName";
-            //
+            lblPluginName.Click += lblPluginName_Click;
+            // 
             // lblLangs
-            //
+            // 
             resources.ApplyResources(lblLangs, "lblLangs");
             lblLangs.Name = "lblLangs";
-            //
+            // 
             // chkLanguages
-            //
+            // 
             chkLanguages.CheckOnClick = true;
             resources.ApplyResources(chkLanguages, "chkLanguages");
             chkLanguages.Name = "chkLanguages";
-            //
+            // 
             // btnSelectAll
-            //
+            // 
             resources.ApplyResources(btnSelectAll, "btnSelectAll");
             btnSelectAll.Name = "btnSelectAll";
             btnSelectAll.Click += BtnSelectAll_Click;
-            //
+            // 
             // btnUnselectAll
-            //
+            // 
             resources.ApplyResources(btnUnselectAll, "btnUnselectAll");
             btnUnselectAll.Name = "btnUnselectAll";
             btnUnselectAll.Click += BtnUnselectAll_Click;
-            //
+            // 
             // btnExtract
-            //
+            // 
             btnExtract.BackColor = Color.LightYellow;
             resources.ApplyResources(btnExtract, "btnExtract");
             btnExtract.Name = "btnExtract";
             btnExtract.UseVisualStyleBackColor = false;
             btnExtract.Click += BtnExtract_Click;
-            //
+            // 
             // btnTranslate
-            //
+            // 
             btnTranslate.BackColor = Color.LightGreen;
             resources.ApplyResources(btnTranslate, "btnTranslate");
             btnTranslate.Name = "btnTranslate";
             btnTranslate.UseVisualStyleBackColor = false;
             btnTranslate.Click += BtnTranslate_Click;
-            //
+            // 
             // btnCompile
-            //
+            // 
             btnCompile.BackColor = Color.LightCoral;
             resources.ApplyResources(btnCompile, "btnCompile");
             btnCompile.Name = "btnCompile";
             btnCompile.UseVisualStyleBackColor = false;
             btnCompile.Click += BtnCompile_Click;
-            //
+            // 
             // btnFullUpdate
-            //
+            // 
             btnFullUpdate.BackColor = Color.LightSteelBlue;
             resources.ApplyResources(btnFullUpdate, "btnFullUpdate");
             btnFullUpdate.Name = "btnFullUpdate";
             btnFullUpdate.UseVisualStyleBackColor = false;
             btnFullUpdate.Click += BtnFullUpdate_Click;
-            //
+            // 
             // btnStopEnigma2
-            //
+            // 
             btnStopEnigma2.BackColor = Color.IndianRed;
             resources.ApplyResources(btnStopEnigma2, "btnStopEnigma2");
             btnStopEnigma2.Name = "btnStopEnigma2";
             btnStopEnigma2.UseVisualStyleBackColor = false;
             btnStopEnigma2.Click += BtnStopEnigma2_Click;
-            //
+            // 
             // progressBarEnigma2
-            //
+            // 
             resources.ApplyResources(progressBarEnigma2, "progressBarEnigma2");
             progressBarEnigma2.Name = "progressBarEnigma2";
-            //
+            // 
             // lblStatus
-            //
+            // 
             resources.ApplyResources(lblStatus, "lblStatus");
             lblStatus.ForeColor = Color.DarkGreen;
             lblStatus.Name = "lblStatus";
             lblStatus.Click += lblStatus_Click;
-            //
+            // 
             // lblCounter
-            //
+            // 
             resources.ApplyResources(lblCounter, "lblCounter");
             lblCounter.Name = "lblCounter";
-            //
+            // 
             // lblTimer
-            //
+            // 
             lblTimer.ForeColor = Color.DarkRed;
             resources.ApplyResources(lblTimer, "lblTimer");
             lblTimer.Name = "lblTimer";
-            //
+            // 
             // btnClearLog
-            //
+            // 
             btnClearLog.BackColor = Color.LightCoral;
             resources.ApplyResources(btnClearLog, "btnClearLog");
             btnClearLog.Name = "btnClearLog";
             btnClearLog.UseVisualStyleBackColor = false;
             btnClearLog.Click += BtnClearLog_Click;
-            //
+            // 
             // btnSaveLog
-            //
+            // 
             btnSaveLog.BackColor = Color.LightGreen;
             resources.ApplyResources(btnSaveLog, "btnSaveLog");
             btnSaveLog.Name = "btnSaveLog";
             btnSaveLog.UseVisualStyleBackColor = false;
             btnSaveLog.Click += BtnSaveLog_Click;
-            //
+            // 
             // lblMonitor
-            //
+            // 
             resources.ApplyResources(lblMonitor, "lblMonitor");
             lblMonitor.ForeColor = Color.DarkBlue;
             lblMonitor.Name = "lblMonitor";
-            //
+            // 
             // rtxtLog
-            //
+            // 
             resources.ApplyResources(rtxtLog, "rtxtLog");
             rtxtLog.BackColor = Color.Black;
             rtxtLog.ForeColor = Color.White;
             rtxtLog.Name = "rtxtLog";
             rtxtLog.ReadOnly = true;
-            //
+            // 
             // picLogo
-            //
+            // 
             picLogo.BackColor = Color.Transparent;
             picLogo.Cursor = Cursors.Hand;
             resources.ApplyResources(picLogo, "picLogo");
             picLogo.Name = "picLogo";
             picLogo.TabStop = false;
             picLogo.Click += PicLogo_Click;
-            //
+            // 
             // chkUseCacheGlobal
-            //
+            // 
             resources.ApplyResources(chkUseCacheGlobal, "chkUseCacheGlobal");
-            chkUseCacheGlobal.Checked = true;
-            chkUseCacheGlobal.CheckState = CheckState.Checked;
             chkUseCacheGlobal.Name = "chkUseCacheGlobal";
             chkUseCacheGlobal.UseVisualStyleBackColor = true;
             chkUseCacheGlobal.CheckedChanged += ChkUseCacheGlobal_CheckedChanged;
-            //
+            // 
             // btnDeleteCacheGlobal
-            //
+            // 
             btnDeleteCacheGlobal.BackColor = Color.LightYellow;
             resources.ApplyResources(btnDeleteCacheGlobal, "btnDeleteCacheGlobal");
             btnDeleteCacheGlobal.Name = "btnDeleteCacheGlobal";
             btnDeleteCacheGlobal.UseVisualStyleBackColor = false;
             btnDeleteCacheGlobal.Click += BtnDeleteCacheGlobal_Click;
-            //
+            // 
             // btnImportCacheGlobal
-            //
+            // 
             btnImportCacheGlobal.BackColor = Color.LightCyan;
             resources.ApplyResources(btnImportCacheGlobal, "btnImportCacheGlobal");
             btnImportCacheGlobal.Name = "btnImportCacheGlobal";
             btnImportCacheGlobal.UseVisualStyleBackColor = false;
             btnImportCacheGlobal.Click += BtnImportCacheGlobal_Click;
-            //
+            // 
             // Form1
-            //
+            // 
             BackColor = SystemColors.Control;
             resources.ApplyResources(this, "$this");
             Controls.Add(lblHeader);
@@ -424,6 +434,7 @@ namespace TranslationProject
         private CheckBox chkUseOutput;
         private Button btnSelectLanguages;
         private Button btnStart;
+        private Button btnPause;
         private Button btnStop;
         private ProgressBar progressBar;
 

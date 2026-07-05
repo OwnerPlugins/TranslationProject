@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace TranslationProject
+﻿namespace TranslationProject
 {
     internal static class Program
     {

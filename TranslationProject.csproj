@@ -11,12 +11,15 @@
     <Copyright>@Lululla</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/OwnerPlugins/TranslationProject</RepositoryUrl>
-    <PackageIcon>app.ico</PackageIcon>
+    <PackageIcon></PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <NeutralLanguage>en</NeutralLanguage>
-    <AssemblyVersion>2.3</AssemblyVersion>
-    <FileVersion>2.3</FileVersion>
+    <AssemblyVersion>2.4</AssemblyVersion>
+    <FileVersion>2.4</FileVersion>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

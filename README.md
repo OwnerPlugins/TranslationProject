@@ -1,4 +1,4 @@
-# Translation Tool v2.3 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.1 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.3-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.4-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -48,10 +48,11 @@
 - **Dual Mode:** Switch between C# and Enigma2 modes.
 - **Language Selection:** Choose from over 90 languages.
 - **Select / Unselect All:** Quickly manage language selection.
-- **Smart Cache:** Saves translations locally to avoid repeated API calls.
-- **Import Cache:** Import translations from Python scripts.
+- **Smart Cache:** Saves translations locally to avoid repeated API calls. Cache is checked immediately when enabled, even if folders were selected earlier.
+- **Import Cache:** Import translations from Python scripts or any `translation_cache.json`.
 - **Delete Cache:** Clear the cache to force re-translation.
 - **Progress Monitor:** Real-time progress, status, and elapsed time.
+- **Pause / Resume:** Pause and resume translation operations at any time.
 - **Stop Button:** Cancel operations at any time.
 - **Save Log:** Export the log to a text file.
 - **Custom Output Folder:** Choose where to save translated files.
@@ -65,11 +66,11 @@
   <tr>
     <td align="center">
       <img src="screen/screen1.png?sanitize=true&raw=true" title="preview1" width="400"/><br/>
-      <b>C#</b>
+      <b>Preview 1</b>
     </td>
     <td align="center">
       <img src="screen/screen2.png?sanitize=true&raw=true" title="preview2" width="400"/><br/>
-      <b>Enigma2 Plugin Manager</b>
+      <b>Preview 2</b>
     </td>
   </tr>
 </table>
@@ -208,6 +209,16 @@ TranslationProject/
 ---
 
 ## 🔧 Changelog
+
+### Version 2.4 – 2026-07-06
+- **Added:** Pause/Resume button for translation operations.
+- **Added:** Auto-detection of `PluginLanguageDomain` from `__init__.py` or `plugin.py` – automatically pre-fills the plugin name field when selecting an Enigma2 plugin folder.
+- **Fixed:** `.lng` parser now uses `LastIndexOf(':')` to correctly handle keys containing colons (prevents `:` accumulation in translations).
+- **Fixed:** Cache system now respects `useCache` flag – starts disabled, checks only when enabled.
+- **Fixed:** Cache check triggers immediately when flag is enabled, even if folders were selected earlier.
+- **Fixed:** Removed duplicate cache check when custom output folder equals project's `languages` folder.
+- **Improved:** Cache MessageBox shows full file details (path, entries, last modified).
+- **Improved:** Custom output folder now takes priority over project folder when both are selected.
 
 ### Version 2.3 – 2026-06-20
 - **Fix:** Form now auto-expands when selecting a project or plugin folder (C# and Enigma2 modes).

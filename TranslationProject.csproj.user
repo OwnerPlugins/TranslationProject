@@ -8,6 +8,7 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
     <GenerateDocumentationFile>False</GenerateDocumentationFile>
     <Copyright>@Lululla</Copyright>
+    <_LastSelectedProfileId>D:\PcBeatrice\Desktop\Translation_project\TranslationProject\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Form1.cs">

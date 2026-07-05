@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace TranslationProject
 {
@@ -25,11 +25,15 @@ namespace TranslationProject
         private bool _isExtracted = false;
         private bool _isTranslated = false;
 
+        private bool _isPaused = false;
+        private ManualResetEventSlim _pauseEvent = new ManualResetEventSlim(true);
+
         // Monitor
         private DateTime _operationStartTime;
         private int _totalItems = 0;
         private int _processedItems = 0;
         private System.Windows.Forms.Timer _timer;
+        private const string SEPARATOR = "::";
 
         private readonly Dictionary<string, string> _allLanguages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -67,7 +71,8 @@ namespace TranslationProject
         {
             _selectedLanguages = new Dictionary<string, string>(_allLanguages);
             InitializeComponent();
-
+            _useCache = false;
+            chkUseCacheGlobal.Checked = false;
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
             string shortVersion = version != null ? $"{version.Major}.{version.Minor}" : "1.0";
             lblVersion.Text = $"Version {shortVersion} - Extract, Translate, Compile";
@@ -151,6 +156,64 @@ namespace TranslationProject
             Log($"Loaded {chkLanguages.Items.Count} languages");
         }
 
+        private string DetectPluginLanguageDomain(string pluginPath)
+        {
+            try
+            {
+                // Check __init__.py first, then plugin.py, then all .py files in the root folder
+                string[] filesToCheck = { "__init__.py", "plugin.py" };
+                var allPyFiles = Directory.GetFiles(pluginPath, "*.py", SearchOption.TopDirectoryOnly);
+                var priorityFiles = new List<string>();
+
+                // Add priority files first if they exist
+                foreach (var f in filesToCheck)
+                {
+                    string fullPath = Path.Combine(pluginPath, f);
+                    if (File.Exists(fullPath))
+                        priorityFiles.Add(fullPath);
+                }
+
+                // Then add all other .py files
+                foreach (var file in allPyFiles)
+                {
+                    if (!priorityFiles.Contains(file))
+                        priorityFiles.Add(file);
+                }
+
+                foreach (var file in priorityFiles)
+                {
+                    string fileName = Path.GetFileName(file);
+
+                    // Skip unnecessary files
+                    if (fileName.StartsWith("test_") || fileName == "update_translation.py" || fileName == "translate_utils.py")
+                        continue;
+
+                    string content = File.ReadAllText(file, Encoding.UTF8);
+
+                    // Look for: PluginLanguageDomain = "Name"
+                    var regex = new Regex(@"PluginLanguageDomain\s*=\s*[""']([^""']+)[""']");
+                    var match = regex.Match(content);
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value.Trim();
+                    }
+
+                    // Alternative pattern: LANGUAGE_DOMAIN = "Name"
+                    var regexAlt = new Regex(@"LANGUAGE_DOMAIN\s*=\s*[""']([^""']+)[""']");
+                    var matchAlt = regexAlt.Match(content);
+                    if (matchAlt.Success)
+                    {
+                        return matchAlt.Groups[1].Value.Trim();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error detecting PluginLanguageDomain: {ex.Message}");
+            }
+
+            return null;
+        }
         private List<string> GetSelectedLanguages()
         {
             var result = new List<string>();
@@ -207,6 +270,7 @@ namespace TranslationProject
             UpdateCounter();
             UpdateTimer();
         }
+
         private void UpdateStatus(string text, Color color)
         {
             if (lblStatus == null) return;
@@ -279,6 +343,100 @@ namespace TranslationProject
             Log($"Operation completed in {lblTimer?.Text ?? "00:00"}");
         }
 
+        private void BtnPause_Click(object sender, EventArgs e)
+        {
+            if (_cts == null || _cts.IsCancellationRequested)
+            {
+                Log("Pause not available: no translation running.");
+                return;
+            }
+
+            if (_isPaused)
+            {
+                _isPaused = false;
+                _pauseEvent.Set();
+                btnPause.Text = "Resume";
+                btnPause.BackColor = Color.Gold;
+                Log("Resumed.");
+                UpdateStatus("Running", Color.Blue);
+            }
+            else
+            {
+                _isPaused = true;
+                _pauseEvent.Reset();
+                btnPause.Text = "Continue";
+                btnPause.BackColor = Color.Gold;
+                Log("Paused.");
+                UpdateStatus("Paused", Color.Orange);
+            }
+        }
+
+        // ================================================================
+        // CACHE CHECK ON BROWSE (ONLY)
+        // ================================================================
+        private void CheckCacheOnFolder(string folderPath, string context)
+        {
+            if (!_useCache)
+            {
+                Log($"Cache disabled, skipping check for {context}");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            {
+                Log($"Invalid folder for cache check: {folderPath}");
+                return;
+            }
+
+            string cacheFile = Path.Combine(folderPath, "translation_cache.json");
+            Log($"Checking for cache in {context}: {cacheFile}");
+
+            if (!File.Exists(cacheFile))
+            {
+                Log($"No cache file found in {context}");
+                return;
+            }
+
+            Log($"Cache file found in {context}");
+
+            bool alreadyLoaded = _cache != null && _cache.Count > 0;
+            string msg = alreadyLoaded
+                ? $"Cache file found in {context}:\n{cacheFile}\n\nCurrent cache has {_cache.Count} entries.\n\nUse this cache instead?"
+                : $"Cache file found in {context}:\n{cacheFile}\n\nUse it?";
+
+            var result = MessageBox.Show(msg, "Cache Found", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    string json = File.ReadAllText(cacheFile, Encoding.UTF8);
+                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    if (loaded != null && loaded.Count > 0)
+                    {
+                        _cache = loaded;
+                        _cacheFile = cacheFile;
+                        Log($"Cache loaded from {context}: {_cache.Count} entries");
+                    }
+                    else
+                    {
+                        Log($"Cache file in {context} is empty");
+                        _cache = new Dictionary<string, string>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"Error loading cache from {context}: {ex.Message}");
+                    _cache = new Dictionary<string, string>();
+                }
+            }
+            else
+            {
+                Log($"Cache in {context} ignored by user");
+                _cache = new Dictionary<string, string>();
+            }
+        }
+
         // ================================================================
         // EVENTS - MODE
         // ================================================================
@@ -311,8 +469,22 @@ namespace TranslationProject
             {
                 if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    txtProjectPath.Text = fbd.SelectedPath;
-                    /* SetLogAreaVisible(true); */ // Show log
+                    string selectedPath = fbd.SelectedPath;
+                    txtProjectPath.Text = selectedPath;
+                    _projectFolder = selectedPath;
+                    _outputFolder = Path.Combine(selectedPath, "languages");
+                    Log($"Project folder selected: {selectedPath}");
+
+                    // IF THE FLAG IS ALREADY ACTIVE, CHECK IMMEDIATELY
+                    if (_useCache)
+                    {
+                        ChkUseCacheGlobal_CheckedChanged(sender, e);
+                    }
+                    else
+                    {
+                        Log("Cache disabled. Enable 'Use Cache' to check for existing cache file.");
+                    }
+
                     ShowLogArea();
                     this.Refresh();
                 }
@@ -321,7 +493,29 @@ namespace TranslationProject
 
         private void BtnBrowseOutput_Click(object sender, EventArgs e)
         {
-            using (var fbd = new FolderBrowserDialog()) { if (fbd.ShowDialog() == DialogResult.OK) txtOutputPath.Text = fbd.SelectedPath; }
+            using (var fbd = new FolderBrowserDialog())
+            {
+                if (fbd.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedPath = fbd.SelectedPath;
+                    txtOutputPath.Text = selectedPath;
+                    _outputFolder = selectedPath;
+                    Log($"Output folder selected: {selectedPath}");
+
+                    // IF THE FLAG IS ALREADY ACTIVE, CHECK IMMEDIATELY
+                    if (_useCache)
+                    {
+                        ChkUseCacheGlobal_CheckedChanged(sender, e);
+                    }
+                    else
+                    {
+                        Log("Cache disabled. Enable 'Use Cache' to check for existing cache file.");
+                    }
+
+                    ShowLogArea();
+                    this.Refresh();
+                }
+            }
         }
 
         private void ChkUseOutput_CheckedChanged(object sender, EventArgs e)
@@ -342,17 +536,6 @@ namespace TranslationProject
             }
         }
 
-        private string GetOutputFolder()
-        {
-            if (string.IsNullOrWhiteSpace(txtProjectPath.Text))
-                return null;
-
-            if (chkUseOutput.Checked && !string.IsNullOrWhiteSpace(txtOutputPath.Text))
-                return txtOutputPath.Text.Trim();
-            else
-                return Path.Combine(txtProjectPath.Text.Trim(), "languages");
-        }
-
         private async void BtnStart_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtProjectPath.Text)) { MessageBox.Show("Select folder.", "Error"); return; }
@@ -365,13 +548,26 @@ namespace TranslationProject
             Directory.CreateDirectory(_outputFolder);
 
             _cacheFile = Path.Combine(_outputFolder, "translation_cache.json");
+
+            Log($"Starting translation. Output: {_outputFolder}");
+            Log($"Cache file: {_cacheFile}");
+
+            // NO CACHE CHECK HERE - ONLY ON BROWSE
+
             LoadCache();
+            SaveCache();
 
             ShowLogArea();
             this.Refresh();
 
             btnStart.Enabled = false;
             btnStop.Enabled = true;
+            btnPause.Enabled = true;
+            btnPause.Text = "Pause";
+            btnPause.BackColor = Color.Yellow;
+            _isPaused = false;
+            _pauseEvent.Set();
+
             progressBar.Visible = true;
             rtxtLog.Clear();
             _cts = new CancellationTokenSource();
@@ -388,6 +584,11 @@ namespace TranslationProject
             {
                 btnStart.Enabled = true;
                 btnStop.Enabled = false;
+                btnPause.Enabled = false;
+                btnPause.Text = "Pause";
+                btnPause.BackColor = Color.Yellow;
+                _isPaused = false;
+                _pauseEvent.Set();
                 progressBar.Visible = false;
                 _cts?.Dispose();
                 _cts = null;
@@ -397,9 +598,11 @@ namespace TranslationProject
 
         private void BtnStop_Click(object sender, EventArgs e)
         {
+            _pauseEvent.Set();
             _cts?.Cancel();
             Log("Stopping...");
             btnStop.Enabled = false;
+            btnPause.Enabled = false;
         }
 
         // ================================================================
@@ -411,14 +614,36 @@ namespace TranslationProject
             {
                 if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    txtPluginPath.Text = fbd.SelectedPath;
+                    string selectedPath = fbd.SelectedPath;
+                    txtPluginPath.Text = selectedPath;
                     _isPluginFolderSelected = true;
                     _isExtracted = false;
                     _isTranslated = false;
-                    UpdateButtonsState();
-                    Log($"Selected: {fbd.SelectedPath}");
-                    ResetMonitor();
 
+                    // ============================================================
+                    // AUTO-DETECT PluginLanguageDomain
+                    // ============================================================
+                    string detectedName = DetectPluginLanguageDomain(selectedPath);
+                    if (!string.IsNullOrEmpty(detectedName))
+                    {
+                        txtPluginName.Text = detectedName;
+                        Log($"PluginLanguageDomain detected: {detectedName}");
+                    }
+                    else
+                    {
+                        txtPluginName.Text = string.Empty;
+                        Log("PluginLanguageDomain not found. Will use folder name.");
+                    }
+
+                    Log($"Plugin folder selected: {selectedPath}");
+
+                    // CHECK CACHE IMMEDIATELY
+                    string outputFolder = Path.Combine(selectedPath, "languages");
+                    _outputFolder = outputFolder;
+                    CheckCacheOnFolder(outputFolder, "plugin (languages folder)");
+
+                    UpdateButtonsState();
+                    ResetMonitor();
                     ShowLogArea();
                     this.Refresh();
                 }
@@ -521,7 +746,6 @@ namespace TranslationProject
                 Log($"POT: {potFile}");
 
                 int total = selectedLangs.Count;
-                /* StartOperation(total, $"Translating {total} languages"); */
                 StartOperation(total, $"Translating {total} languages", progressBarEnigma2);
                 int current = 0;
 
@@ -590,7 +814,6 @@ namespace TranslationProject
                     return;
                 }
 
-                /* StartOperation(dirsToCompile.Count, "Compiling selected languages"); */
                 StartOperation(dirsToCompile.Count, "Compiling selected languages", progressBarEnigma2);
                 int current = 0;
 
@@ -676,6 +899,127 @@ namespace TranslationProject
         {
             _useCache = chkUseCacheGlobal.Checked;
             Log($"Cache: {(_useCache ? "ENABLED" : "DISABLED")}");
+
+            if (!_useCache) return;
+
+            // ================================================================
+            // DETERMINE THE PATH TO CHECK
+            // ================================================================
+            string cacheFile = null;
+            string context = "";
+
+            if (chkUseOutput.Checked && !string.IsNullOrEmpty(txtOutputPath.Text) && Directory.Exists(txtOutputPath.Text))
+            {
+                // Custom output enabled → check ONLY the output folder
+                cacheFile = Path.Combine(txtOutputPath.Text.Trim(), "translation_cache.json");
+                context = "Custom Output Folder";
+                Log($"Custom output enabled: checking output folder only...");
+            }
+            else if (!string.IsNullOrEmpty(txtProjectPath.Text) && Directory.Exists(txtProjectPath.Text))
+            {
+                // Custom output NOT enabled → check project/languages
+                string langFolder = Path.Combine(txtProjectPath.Text.Trim(), "languages");
+                if (Directory.Exists(langFolder))
+                {
+                    cacheFile = Path.Combine(langFolder, "translation_cache.json");
+                    context = "Project → languages";
+                }
+                else
+                {
+                    Log($"Languages folder not found: {langFolder}");
+                    _cache = new Dictionary<string, string>();
+                    return;
+                }
+            }
+            else if (!string.IsNullOrEmpty(txtPluginPath.Text) && Directory.Exists(txtPluginPath.Text))
+            {
+                // Enigma2 mode
+                string langFolder = Path.Combine(txtPluginPath.Text.Trim(), "languages");
+                if (Directory.Exists(langFolder))
+                {
+                    cacheFile = Path.Combine(langFolder, "translation_cache.json");
+                    context = "Plugin → languages";
+                }
+                else
+                {
+                    Log($"Languages folder not found: {langFolder}");
+                    _cache = new Dictionary<string, string>();
+                    return;
+                }
+            }
+            else
+            {
+                Log("No valid folder selected. Please select a project or plugin folder first.");
+                _cache = new Dictionary<string, string>();
+                return;
+            }
+
+            // ================================================================
+            // CHECK THE FILE
+            // ================================================================
+            Log($"Checking cache in {context}: {cacheFile}");
+
+            if (!File.Exists(cacheFile))
+            {
+                Log($"No cache file found in {context}");
+                _cache = new Dictionary<string, string>();
+                return;
+            }
+
+            // ================================================================
+            // READ FILE DETAILS
+            // ================================================================
+            int entries = 0;
+            DateTime fileDate = File.GetLastWriteTime(cacheFile);
+            try
+            {
+                string json = File.ReadAllText(cacheFile, Encoding.UTF8);
+                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                entries = loaded?.Count ?? 0;
+            }
+            catch { }
+
+            // ================================================================
+            // MESSAGE BOX WITH ALL DETAILS
+            // ================================================================
+            string msg = $"📁 Cache file found!\n\n" +
+                         $"📍 Location: {cacheFile}\n" +
+                         $"📊 Entries: {entries}\n" +
+                         $"📅 Last modified: {fileDate:yyyy-MM-dd HH:mm:ss}\n" +
+                         $"📁 Folder: {Path.GetDirectoryName(cacheFile)}\n\n" +
+                         $"Use this cache?";
+
+            var result = MessageBox.Show(msg, "Cache Found", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    string json = File.ReadAllText(cacheFile, Encoding.UTF8);
+                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    if (loaded != null && loaded.Count > 0)
+                    {
+                        _cache = loaded;
+                        _cacheFile = cacheFile;
+                        Log($"✅ Cache loaded: {_cache.Count} entries from {context}");
+                    }
+                    else
+                    {
+                        _cache = new Dictionary<string, string>();
+                        Log($"⚠️ Cache file is empty");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"❌ Error loading cache: {ex.Message}");
+                    _cache = new Dictionary<string, string>();
+                }
+            }
+            else
+            {
+                _cache = new Dictionary<string, string>();
+                Log($"⏭️ Cache from {context} ignored by user");
+            }
         }
 
         private void BtnDeleteCacheGlobal_Click(object sender, EventArgs e)
@@ -780,9 +1124,6 @@ namespace TranslationProject
             }
         }
 
-        /// <summary>
-        /// Returns the cache file path based on the current mode (C# or Enigma2)
-        /// </summary>
         private string GetCurrentCacheFile()
         {
             bool isCSharpMode = cmbMode.SelectedIndex == 0;
@@ -870,6 +1211,8 @@ namespace TranslationProject
             foreach (var lang in _selectedLanguages)
             {
                 token.ThrowIfCancellationRequested();
+                // PAUSA CHECK
+                _pauseEvent.Wait(token);
                 current++;
                 Log($"[{current}/{total}] {lang.Value}");
                 UpdateProgress(current);
@@ -925,7 +1268,10 @@ namespace TranslationProject
 
             if (changed)
             {
-                var lines = translations.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}: {kvp.Value}").ToArray();
+                var lines = translations
+                    .OrderBy(kvp => kvp.Key)
+                    .Select(kvp => $"{kvp.Key}{SEPARATOR}{kvp.Value}")
+                    .ToArray();
                 await File.WriteAllLinesAsync(filePath, lines, new UTF8Encoding(false), token);
                 Log($"  saved ({translations.Count} entries)");
             }
@@ -941,15 +1287,80 @@ namespace TranslationProject
             if (!File.Exists(path)) return dict;
             foreach (string line in File.ReadAllLines(path, Encoding.UTF8))
             {
-                int colon = line.IndexOf(':');
-                if (colon > 0)
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // Use last ':' as separator
+                int lastColon = line.LastIndexOf(':');
+                if (lastColon > 0)
                 {
-                    string key = line.Substring(0, colon).Trim();
-                    string value = line.Substring(colon + 1).Trim();
+                    string key = line.Substring(0, lastColon).Trim();
+                    string value = line.Substring(lastColon + 1).Trim();
                     dict[key] = value;
                 }
             }
             return dict;
+        }
+
+        private void LoadCache()
+        {
+            if (!_useCache)
+            {
+                Log("Cache is disabled by user");
+                _cache = new Dictionary<string, string>();
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_cacheFile))
+            {
+                Log("Cache file path is empty, cannot load");
+                return;
+            }
+
+            if (_cache != null && _cache.Count > 0)
+            {
+                Log($"Cache already loaded with {_cache.Count} entries");
+                return;
+            }
+
+            if (File.Exists(_cacheFile))
+            {
+                try
+                {
+                    string json = File.ReadAllText(_cacheFile, new UTF8Encoding(false));
+                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    if (loaded != null && loaded.Count > 0)
+                    {
+                        _cache = loaded;
+                        Log($"Cache loaded: {_cache.Count} entries from {_cacheFile}");
+                    }
+                    else
+                    {
+                        _cache = new Dictionary<string, string>();
+                        Log("Cache file is empty");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _cache = new Dictionary<string, string>();
+                    Log($"Error loading cache: {ex.Message}");
+                }
+            }
+            else
+            {
+                _cache = new Dictionary<string, string>();
+                Log($"Cache file not found: {_cacheFile}");
+            }
+        }
+
+        private void SaveCache()
+        {
+            try
+            {
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
+                File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
+                Log($"Cache saved: {_cache.Count} entries");
+            }
+            catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }
         }
 
         // ================================================================
@@ -1064,36 +1475,21 @@ namespace TranslationProject
             }
         }
 
-        private void LoadCache()
-        {
-            if (File.Exists(_cacheFile))
-            {
-                try
-                {
-                    string json = File.ReadAllText(_cacheFile, new UTF8Encoding(false));
-                    _cache = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-                    Log($"Cache loaded: {_cache.Count} entries");
-                }
-                catch { _cache = new Dictionary<string, string>(); }
-            }
-        }
-
-        private void SaveCache()
-        {
-            try
-            {
-                string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
-                Log($"Cache saved: {_cache.Count} entries");
-            }
-            catch (Exception ex) { Log($"Cache save error: {ex.Message}"); }
-        }
-
         // Unused event stubs (required by designer)
         private void lblStatus_Click(object sender, EventArgs e) { }
 
         private void panelProjectMode_Paint(object sender, PaintEventArgs e) { }
 
         private void panelProjectMode_Paint_1(object sender, PaintEventArgs e) { }
+
+        private void lblVersion_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblPluginName_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

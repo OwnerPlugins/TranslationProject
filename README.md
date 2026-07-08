@@ -1,4 +1,4 @@
-# Translation Tool v2.1 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.5 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.4-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.5-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -42,19 +42,21 @@
 - Extracts strings from `.py` files and `setup.xml`.
 - Generates/updates `.pot` and `.po` files.
 - Auto-translates empty `msgstr` entries.
+- **Preserves Python placeholders** (`%(name)s`, `%(name)d`, etc.) during translation.
 - Compiles `.mo` files ready for Enigma2 devices.
 
 ### 🔹 General Features
 - **Dual Mode:** Switch between C# and Enigma2 modes.
 - **Language Selection:** Choose from over 90 languages.
 - **Select / Unselect All:** Quickly manage language selection.
-- **Smart Cache:** Saves translations locally to avoid repeated API calls. Cache is checked immediately when enabled, even if folders were selected earlier.
+- **Smart Cache:** Saves translations locally to avoid repeated API calls.
 - **Import Cache:** Import translations from Python scripts or any `translation_cache.json`.
 - **Delete Cache:** Clear the cache to force re-translation.
 - **Progress Monitor:** Real-time progress, status, and elapsed time.
-- **Pause / Resume:** Pause and resume translation operations at any time.
+- **Pause / Resume:** Pause and resume translation operations at any time (separate buttons for C# and Enigma2 modes).
 - **Stop Button:** Cancel operations at any time.
 - **Save Log:** Export the log to a text file.
+- **Exit Button:** Close the application with a single click.
 - **Custom Output Folder:** Choose where to save translated files.
 - **Logo Click:** Click the logo to open the GitHub repository.
 
@@ -188,6 +190,8 @@ plugin/locale/
 - **Delete Cache:** Remove all cached translations (forces re-translation).
 - **Import Cache:** Import translations from a Python script's `translation_cache.json` file. This is useful if you already have translations from the Python version.
 
+**Note:** Cache buttons (Import/Delete) are enabled only after selecting a valid project or plugin folder.
+
 ---
 
 ## 📁 Project Structure
@@ -209,6 +213,17 @@ TranslationProject/
 ---
 
 ## 🔧 Changelog
+
+### Version 2.5 – 2026-07-08
+- **Added:** Separate Pause/Resume buttons for C# and Enigma2 modes (each mode has its own dedicated button).
+- **Added:** Exit button to close the application (positioned after Clear Log).
+- **Added:** Protection for Python-style placeholders (`%(name)s`, `%(name)d`, `%(name)f`, etc.) during translation – they are no longer translated, preserving formatting for Enigma2 plugins.
+- **Added:** Protection for C#-style placeholders (`{0}`, `{name}`, etc.) during translation – they are now correctly preserved.
+- **Added:** Cache buttons (Import Cache, Delete Cache) are now enabled only after selecting a valid project or plugin folder.
+- **Added:** All action buttons (Extract, Translate, Compile, Full Update) are automatically disabled during any ongoing operation to prevent concurrent operations and conflicts.
+- **Improved:** Pause/Resume functionality now works correctly in both C# and Enigma2 modes.
+- **Fixed:** The Pause button was previously visible only in Enigma2 mode due to control duplication in the designer – now fixed with two separate controls.
+- **Fixed:** Translation of strings containing Python placeholders no longer corrupts the formatting tokens.
 
 ### Version 2.4 – 2026-07-06
 - **Added:** Pause/Resume button for translation operations.

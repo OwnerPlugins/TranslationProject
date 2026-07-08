@@ -59,5 +59,25 @@ namespace TranslationProject.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Google_AI {
+            get {
+                object obj = ResourceManager.GetObject("Google-AI", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Byte[].
+        /// </summary>
+        internal static byte[] msgfmt {
+            get {
+                object obj = ResourceManager.GetObject("msgfmt", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

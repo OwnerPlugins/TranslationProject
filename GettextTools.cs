@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace TranslationProject
@@ -6,6 +7,19 @@ namespace TranslationProject
     public static class GettextTools
     {
         private static readonly string GettextPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+
+        private static string GetMsgFmtPath()
+        {
+            string tempPath = Path.Combine(Path.GetTempPath(), "msgfmt.exe");
+            if (!File.Exists(tempPath))
+            {
+                byte[] data = Properties.Resources.msgfmt;  // usa la risorsa esistente
+                if (data == null || data.Length == 0)
+                    throw new Exception("msgfmt resource not found");
+                File.WriteAllBytes(tempPath, data);
+            }
+            return tempPath;
+        }
 
         public static bool IsGettextInstalled()
         {
@@ -170,13 +184,7 @@ namespace TranslationProject
         {
             try
             {
-                string msgfmtPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "msgfmt.exe");
-                if (!File.Exists(msgfmtPath))
-                {
-                    log($"msgfmt.exe not found at: {msgfmtPath}");
-                    return false;
-                }
-
+                string msgfmtPath = GetMsgFmtPath();
                 log($"  Compiling: {Path.GetFileName(poFile)}");
                 var args = $"\"{poFile}\" -o \"{moFile}\"";
                 var process = new Process

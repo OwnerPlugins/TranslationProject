@@ -33,7 +33,7 @@ namespace TranslationProject
             chkUseOutput = new CheckBox();
             btnSelectLanguages = new Button();
             btnStart = new Button();
-            btnPause = new Button();
+            btnPauseProject = new Button();
             btnStop = new Button();
             progressBar = new ProgressBar();
             panelEnigma2Mode = new Panel();
@@ -48,6 +48,7 @@ namespace TranslationProject
             btnUnselectAll = new Button();
             btnExtract = new Button();
             btnTranslate = new Button();
+            btnPauseEnigma2 = new Button();
             btnCompile = new Button();
             btnFullUpdate = new Button();
             btnStopEnigma2 = new Button();
@@ -57,6 +58,7 @@ namespace TranslationProject
             lblTimer = new Label();
             btnClearLog = new Button();
             btnSaveLog = new Button();
+            btnExit = new Button();
             lblMonitor = new Label();
             rtxtLog = new RichTextBox();
             picLogo = new PictureBox();
@@ -108,7 +110,7 @@ namespace TranslationProject
             panelProjectMode.Controls.Add(chkUseOutput);
             panelProjectMode.Controls.Add(btnSelectLanguages);
             panelProjectMode.Controls.Add(btnStart);
-            panelProjectMode.Controls.Add(btnPause);
+            panelProjectMode.Controls.Add(btnPauseProject);
             panelProjectMode.Controls.Add(btnStop);
             panelProjectMode.Controls.Add(progressBar);
             resources.ApplyResources(panelProjectMode, "panelProjectMode");
@@ -168,13 +170,13 @@ namespace TranslationProject
             btnStart.UseVisualStyleBackColor = false;
             btnStart.Click += BtnStart_Click;
             // 
-            // btnPause
+            // btnPauseProject
             // 
-            btnPause.BackColor = Color.Yellow;
-            resources.ApplyResources(btnPause, "btnPause");
-            btnPause.Name = "btnPause";
-            btnPause.UseVisualStyleBackColor = false;
-            btnPause.Click += BtnPause_Click;
+            btnPauseProject.BackColor = Color.Yellow;
+            resources.ApplyResources(btnPauseProject, "btnPauseProject");
+            btnPauseProject.Name = "btnPauseProject";
+            btnPauseProject.UseVisualStyleBackColor = false;
+            btnPauseProject.Click += BtnPause_Click;
             // 
             // btnStop
             // 
@@ -202,6 +204,7 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(btnUnselectAll);
             panelEnigma2Mode.Controls.Add(btnExtract);
             panelEnigma2Mode.Controls.Add(btnTranslate);
+            panelEnigma2Mode.Controls.Add(btnPauseEnigma2);
             panelEnigma2Mode.Controls.Add(btnCompile);
             panelEnigma2Mode.Controls.Add(btnFullUpdate);
             panelEnigma2Mode.Controls.Add(btnStopEnigma2);
@@ -278,6 +281,14 @@ namespace TranslationProject
             btnTranslate.UseVisualStyleBackColor = false;
             btnTranslate.Click += BtnTranslate_Click;
             // 
+            // btnPauseEnigma2
+            // 
+            btnPauseEnigma2.BackColor = Color.Yellow;
+            resources.ApplyResources(btnPauseEnigma2, "btnPauseEnigma2");
+            btnPauseEnigma2.Name = "btnPauseEnigma2";
+            btnPauseEnigma2.UseVisualStyleBackColor = false;
+            btnPauseEnigma2.Click += BtnPause_Click;
+            // 
             // btnCompile
             // 
             btnCompile.BackColor = Color.LightCoral;
@@ -341,6 +352,14 @@ namespace TranslationProject
             btnSaveLog.UseVisualStyleBackColor = false;
             btnSaveLog.Click += BtnSaveLog_Click;
             // 
+            // btnExit
+            // 
+            btnExit.BackColor = Color.LightGray;
+            resources.ApplyResources(btnExit, "btnExit");
+            btnExit.Name = "btnExit";
+            btnExit.UseVisualStyleBackColor = false;
+            btnExit.Click += BtnExit_Click;
+            // 
             // lblMonitor
             // 
             resources.ApplyResources(lblMonitor, "lblMonitor");
@@ -359,6 +378,7 @@ namespace TranslationProject
             // 
             picLogo.BackColor = Color.Transparent;
             picLogo.Cursor = Cursors.Hand;
+            picLogo.Image = Properties.Resources.Google_AI;
             resources.ApplyResources(picLogo, "picLogo");
             picLogo.Name = "picLogo";
             picLogo.TabStop = false;
@@ -406,6 +426,7 @@ namespace TranslationProject
             Controls.Add(picLogo);
             Controls.Add(btnSaveLog);
             Controls.Add(btnClearLog);
+            Controls.Add(btnExit);
             Name = "Form1";
             panelProjectMode.ResumeLayout(false);
             panelProjectMode.PerformLayout();
@@ -416,7 +437,7 @@ namespace TranslationProject
             PerformLayout();
         }
 
-        // Declarations
+        // Declare all controls
         private Label lblHeader;
         private Label lblVersion;
         private Label lblCredits;
@@ -434,7 +455,7 @@ namespace TranslationProject
         private CheckBox chkUseOutput;
         private Button btnSelectLanguages;
         private Button btnStart;
-        private Button btnPause;
+        private Button btnPauseProject;
         private Button btnStop;
         private ProgressBar progressBar;
 
@@ -449,11 +470,13 @@ namespace TranslationProject
         private Button btnUnselectAll;
         private Button btnExtract;
         private Button btnTranslate;
+        private Button btnPauseEnigma2;
         private Button btnCompile;
         private Button btnFullUpdate;
         private Button btnStopEnigma2;
         private Button btnClearLog;
         private Button btnSaveLog;
+        private Button btnExit;
 
         private ProgressBar progressBarEnigma2;
         private Label lblStatus;

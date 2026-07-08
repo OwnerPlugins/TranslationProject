@@ -71,6 +71,7 @@ namespace TranslationProject
         {
             _selectedLanguages = new Dictionary<string, string>(_allLanguages);
             InitializeComponent();
+
             _useCache = false;
             chkUseCacheGlobal.Checked = false;
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
@@ -82,14 +83,8 @@ namespace TranslationProject
 
             try
             {
-                string logoPath = Path.Combine(Application.StartupPath, "Google-AI.png");
-                if (File.Exists(logoPath))
-                {
-                    picLogo.Image = Image.FromFile(logoPath);
-                    picLogo.SizeMode = PictureBoxSizeMode.Zoom;
-                }
-                else
-                    picLogo.Visible = false;
+                picLogo.Image = Properties.Resources.Google_AI;  // usa la risorsa
+                picLogo.SizeMode = PictureBoxSizeMode.Zoom;
             }
             catch
             {
@@ -105,8 +100,13 @@ namespace TranslationProject
             rtxtLog.Visible = false;
             btnClearLog.Visible = false;
             btnSaveLog.Visible = false;
-
             this.ClientSize = new Size(950, 450);
+
+            // Ensure both pause buttons are disabled initially
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false;
+            btnPauseProject.Enabled = false;
+            btnPauseEnigma2.Enabled = false;
         }
 
         // ================================================================
@@ -231,18 +231,28 @@ namespace TranslationProject
 
         private void UpdateButtonsState()
         {
-            if (btnExtract == null) return;
-            btnExtract.Enabled = _isPluginFolderSelected;
-            btnExtract.BackColor = _isPluginFolderSelected ? Color.LightYellow : Color.LightGray;
+            bool isBusy = (_cts != null && !_cts.IsCancellationRequested) ||
+                          (_ctsEnigma2 != null && !_ctsEnigma2.IsCancellationRequested);
 
-            btnTranslate.Enabled = _isExtracted;
-            btnTranslate.BackColor = _isExtracted ? Color.LightGreen : Color.LightGray;
+            btnExtract.Enabled = _isPluginFolderSelected && !isBusy;
+            btnTranslate.Enabled = _isExtracted && !isBusy;
+            btnCompile.Enabled = _isTranslated && !isBusy;
+            btnFullUpdate.Enabled = _isPluginFolderSelected && !isBusy;
+        }
 
-            btnCompile.Enabled = _isTranslated;
-            btnCompile.BackColor = _isTranslated ? Color.LightCoral : Color.LightGray;
+        /// <summary>
+        /// Updates all buttons state based on current operation status.
+        /// </summary>
+        private void UpdateAllButtonsState()
+        {
+            bool isBusy = (_cts != null && !_cts.IsCancellationRequested) ||
+                          (_ctsEnigma2 != null && !_ctsEnigma2.IsCancellationRequested);
 
-            btnFullUpdate.Enabled = _isPluginFolderSelected;
-            btnFullUpdate.BackColor = _isPluginFolderSelected ? Color.LightSteelBlue : Color.LightGray;
+            // Disable Full Update and other buttons during operations
+            btnFullUpdate.Enabled = _isPluginFolderSelected && !isBusy;
+            btnExtract.Enabled = _isPluginFolderSelected && !isBusy;
+            btnTranslate.Enabled = _isExtracted && !isBusy;
+            btnCompile.Enabled = _isTranslated && !isBusy;
         }
 
         private string GetPluginName(string pluginPath)
@@ -345,7 +355,11 @@ namespace TranslationProject
 
         private void BtnPause_Click(object sender, EventArgs e)
         {
-            if (_cts == null || _cts.IsCancellationRequested)
+            // Check if any operation is running (C# or Enigma2)
+            bool isRunning = (_cts != null && !_cts.IsCancellationRequested) ||
+                             (_ctsEnigma2 != null && !_ctsEnigma2.IsCancellationRequested);
+
+            if (!isRunning)
             {
                 Log("Pause not available: no translation running.");
                 return;
@@ -353,19 +367,26 @@ namespace TranslationProject
 
             if (_isPaused)
             {
+                // Resume
                 _isPaused = false;
                 _pauseEvent.Set();
-                btnPause.Text = "Resume";
-                btnPause.BackColor = Color.Gold;
+                // Update both buttons (the visible one will reflect the change)
+                btnPauseProject.Text = "Pause";
+                btnPauseProject.BackColor = Color.Yellow;
+                btnPauseEnigma2.Text = "Pause";
+                btnPauseEnigma2.BackColor = Color.Yellow;
                 Log("Resumed.");
                 UpdateStatus("Running", Color.Blue);
             }
             else
             {
+                // Pause
                 _isPaused = true;
                 _pauseEvent.Reset();
-                btnPause.Text = "Continue";
-                btnPause.BackColor = Color.Gold;
+                btnPauseProject.Text = "Resume";
+                btnPauseProject.BackColor = Color.Gold;
+                btnPauseEnigma2.Text = "Resume";
+                btnPauseEnigma2.BackColor = Color.Gold;
                 Log("Paused.");
                 UpdateStatus("Paused", Color.Orange);
             }
@@ -457,6 +478,7 @@ namespace TranslationProject
             _isExtracted = false;
             _isTranslated = false;
             UpdateButtonsState();
+            UpdateCacheButtonsState();
             ResetMonitor();
         }
 
@@ -484,6 +506,8 @@ namespace TranslationProject
                     {
                         Log("Cache disabled. Enable 'Use Cache' to check for existing cache file.");
                     }
+
+                    UpdateCacheButtonsState();
 
                     ShowLogArea();
                     this.Refresh();
@@ -562,9 +586,11 @@ namespace TranslationProject
 
             btnStart.Enabled = false;
             btnStop.Enabled = true;
-            btnPause.Enabled = true;
-            btnPause.Text = "Pause";
-            btnPause.BackColor = Color.Yellow;
+            // Enable only the C# pause button
+            btnPauseProject.Enabled = true;
+            btnPauseProject.Text = "Pause";
+            btnPauseProject.BackColor = Color.Yellow;
+            btnPauseEnigma2.Enabled = false; // Ensure the other is disabled
             _isPaused = false;
             _pauseEvent.Set();
 
@@ -584,9 +610,9 @@ namespace TranslationProject
             {
                 btnStart.Enabled = true;
                 btnStop.Enabled = false;
-                btnPause.Enabled = false;
-                btnPause.Text = "Pause";
-                btnPause.BackColor = Color.Yellow;
+                btnPauseProject.Enabled = false;
+                btnPauseProject.Text = "Pause";
+                btnPauseProject.BackColor = Color.Yellow;
                 _isPaused = false;
                 _pauseEvent.Set();
                 progressBar.Visible = false;
@@ -602,7 +628,7 @@ namespace TranslationProject
             _cts?.Cancel();
             Log("Stopping...");
             btnStop.Enabled = false;
-            btnPause.Enabled = false;
+            btnPauseProject.Enabled = false;
         }
 
         // ================================================================
@@ -643,6 +669,9 @@ namespace TranslationProject
                     CheckCacheOnFolder(outputFolder, "plugin (languages folder)");
 
                     UpdateButtonsState();
+                    UpdateCacheButtonsState();
+                    btnImportCacheGlobal.Enabled = true;
+                    btnDeleteCacheGlobal.Enabled = true;
                     ResetMonitor();
                     ShowLogArea();
                     this.Refresh();
@@ -672,6 +701,7 @@ namespace TranslationProject
             _ctsEnigma2?.Cancel();
             Log("Stop requested...");
             btnStopEnigma2.Enabled = false;
+            btnPauseEnigma2.Enabled = false;
         }
 
         private async void BtnExtract_Click(object sender, EventArgs e)
@@ -683,6 +713,9 @@ namespace TranslationProject
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
             btnExtract.Enabled = false;
+            btnFullUpdate.Enabled = false;
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false;
 
             ShowLogArea();
             this.Refresh();
@@ -714,6 +747,7 @@ namespace TranslationProject
                 btnExtract.Enabled = true;
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
+                UpdateButtonsState();
             }
         }
 
@@ -728,7 +762,19 @@ namespace TranslationProject
 
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
+            // Enable only the Enigma2 pause button
+            btnPauseEnigma2.Enabled = true;
+            btnPauseEnigma2.Text = "Pause";
+            btnPauseEnigma2.BackColor = Color.Yellow;
+            btnPauseProject.Enabled = false;
+            _isPaused = false;
+            _pauseEvent.Set();
             btnTranslate.Enabled = false;
+            btnFullUpdate.Enabled = false;
+            btnExtract.Enabled = false;
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false; 
+
 
             try
             {
@@ -770,9 +816,15 @@ namespace TranslationProject
             finally
             {
                 btnStopEnigma2.Enabled = false;
+                btnPauseEnigma2.Enabled = false;
+                btnPauseEnigma2.Text = "Pause";
+                btnPauseEnigma2.BackColor = Color.Yellow;
+                _isPaused = false;
+                _pauseEvent.Set();
                 btnTranslate.Enabled = true;
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
+                UpdateButtonsState();
             }
         }
 
@@ -792,6 +844,11 @@ namespace TranslationProject
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
             btnCompile.Enabled = false;
+            btnFullUpdate.Enabled = false;
+            btnExtract.Enabled = false;
+            btnTranslate.Enabled = false;
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false;
 
             try
             {
@@ -848,6 +905,7 @@ namespace TranslationProject
                 btnCompile.Enabled = true;
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
+                UpdateButtonsState();
             }
         }
 
@@ -862,14 +920,24 @@ namespace TranslationProject
 
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
+            // Enable only the Enigma2 pause button
+            btnPauseEnigma2.Enabled = true;
+            btnPauseEnigma2.Text = "Pause";
+            btnPauseEnigma2.BackColor = Color.Yellow;
+            btnPauseProject.Enabled = false;
+            _isPaused = false;
+            _pauseEvent.Set();
             btnFullUpdate.Enabled = false;
-
+            btnExtract.Enabled = false;
+            btnTranslate.Enabled = false;
+            btnCompile.Enabled = false;
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false;
             try
             {
                 string pluginName = GetPluginName(pluginPath);
                 Log($"Full Update: {pluginName}");
                 Log($"Languages: {string.Join(", ", selectedLangs)}");
-
                 _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
@@ -885,15 +953,45 @@ namespace TranslationProject
             finally
             {
                 btnStopEnigma2.Enabled = false;
+                btnPauseEnigma2.Enabled = false;
+                btnPauseEnigma2.Text = "Pause";
+                btnPauseEnigma2.BackColor = Color.Yellow;
+                _isPaused = false;
+                _pauseEvent.Set();
                 btnFullUpdate.Enabled = true;
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
+                UpdateButtonsState();
             }
         }
 
         // ================================================================
         // UNIFIED CACHE HANDLERS
         // ================================================================
+
+        /// <summary>
+        /// Enables/disables the Import Cache and Delete Cache buttons based on whether
+        /// a valid project or plugin folder is selected.
+        /// </summary>
+        private void UpdateCacheButtonsState()
+        {
+            bool isValid = false;
+
+            // Check C# project folder
+            if (cmbMode.SelectedIndex == 0) // C# mode
+            {
+                isValid = !string.IsNullOrWhiteSpace(txtProjectPath.Text) &&
+                          Directory.Exists(txtProjectPath.Text);
+            }
+            else // Enigma2 mode
+            {
+                isValid = !string.IsNullOrWhiteSpace(txtPluginPath.Text) &&
+                          Directory.Exists(txtPluginPath.Text);
+            }
+
+            btnImportCacheGlobal.Enabled = isValid;
+            btnDeleteCacheGlobal.Enabled = isValid;
+        }
 
         private void ChkUseCacheGlobal_CheckedChanged(object sender, EventArgs e)
         {
@@ -1174,6 +1272,14 @@ namespace TranslationProject
             }
         }
 
+        /// <summary>
+        /// Exits the application.
+        /// </summary>
+        private void BtnExit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
         // ================================================================
         // LOGO CLICK
         // ================================================================
@@ -1366,65 +1472,89 @@ namespace TranslationProject
         // ================================================================
         // TRANSLATION HELPERS
         // ================================================================
-        private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
+        /// <summary>
+        /// Translates a text string while preserving Python‑style placeholders
+        /// and C#‑style placeholders.
+        /// </summary>
+        private async Task<string> TranslateTextAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            string cacheKey = ComputeMd5($"{targetLang}:{text}");
-            if (_cache.TryGetValue(cacheKey, out string cached)) return cached;
-
-            if (IsArabic(text) && targetLang != "ar") return text;
-
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(text)}";
-
-            int maxRetries = 3;
-            int delay = 1000; // ms
-
-            for (int attempt = 0; attempt < maxRetries; attempt++)
+            // 1. Protect Python placeholders: %(name)s, %(name)d, ...
+            var pythonPlaceholders = new Dictionary<string, string>();
+            int idx = 0;
+            string textWithPythonPlaceholders = text;
+            var pythonRegex = new Regex(@"%\([a-zA-Z_][a-zA-Z0-9_]*\)[diouxXeEfFgGcrs]");
+            foreach (Match match in pythonRegex.Matches(text))
             {
-                try
+                string placeholder = match.Value;
+                string replacement = $"__PYPH_{idx}__";
+                textWithPythonPlaceholders = textWithPythonPlaceholders.Replace(placeholder, replacement);
+                pythonPlaceholders[replacement] = placeholder;
+                idx++;
+            }
+
+            // 2. Protect C# placeholders: {0}, {name}, ...
+            var csharpPlaceholders = new Dictionary<string, string>();
+            idx = 0;
+            string textWithCSharpPlaceholders = textWithPythonPlaceholders;
+            var csharpRegex = new Regex(@"\{[^{}]+\}");
+            foreach (Match match in csharpRegex.Matches(textWithPythonPlaceholders))
+            {
+                string placeholder = match.Value;
+                string replacement = $"__CSH_{idx}__";
+                textWithCSharpPlaceholders = textWithCSharpPlaceholders.Replace(placeholder, replacement);
+                csharpPlaceholders[replacement] = placeholder;
+                idx++;
+            }
+
+            // 3. Cache
+            string cacheKey = ComputeMd5($"{targetLang}:{textWithCSharpPlaceholders}");
+            if (_cache.TryGetValue(cacheKey, out string cached) && !string.IsNullOrEmpty(cached))
+            {
+                string restored = cached;
+                foreach (var kvp in csharpPlaceholders)
+                    restored = restored.Replace(kvp.Key, kvp.Value);
+                foreach (var kvp in pythonPlaceholders)
+                    restored = restored.Replace(kvp.Key, kvp.Value);
+                return restored;
+            }
+
+            // 4. Translate
+            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
+
+                var response = await _httpClient.GetAsync(url, linked.Token);
+                string resp = await response.Content.ReadAsStringAsync(linked.Token);
+                var json = JArray.Parse(resp);
+
+                string translated = "";
+                if (json[0] is JArray arr)
                 {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                    var response = await _httpClient.GetAsync(url, linked.Token);
-                    string resp = await response.Content.ReadAsStringAsync(linked.Token);
-
-                    // Check if response is HTML (starts with <)
-                    if (resp.TrimStart().StartsWith("<"))
-                    {
-                        Log($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
-                        await Task.Delay(delay * (attempt + 1), token);
-                        continue;
-                    }
-
-                    var json = JArray.Parse(resp);
-                    string translated = "";
-                    if (json[0] is JArray arr)
-                    {
-                        foreach (var item in arr)
-                            if (item[0] != null)
-                                translated += item[0].ToString();
-                    }
-
-                    translated = CleanWhitespace(translated);
-                    if (!string.IsNullOrEmpty(translated))
-                    {
-                        _cache[cacheKey] = translated;
-                        return translated;
-                    }
-
-                    return text;
+                    foreach (var item in arr)
+                        if (item[0] != null)
+                            translated += item[0].ToString();
                 }
-                catch (Exception ex)
+
+                if (!string.IsNullOrEmpty(translated))
                 {
-                    Log($"Translation error: {ex.Message}");
-                    if (attempt < maxRetries - 1)
-                    {
-                        await Task.Delay(delay * (attempt + 1), token);
-                    }
+                    translated = CleanWhitespace(translated);
+                    // Restore placeholders
+                    foreach (var kvp in csharpPlaceholders)
+                        translated = translated.Replace(kvp.Key, kvp.Value);
+                    foreach (var kvp in pythonPlaceholders)
+                        translated = translated.Replace(kvp.Key, kvp.Value);
+
+                    _cache[cacheKey] = translated;
+                    SaveCache();
+                    return translated;
                 }
             }
+            catch { }
 
             return text;
         }
@@ -1463,6 +1593,120 @@ namespace TranslationProject
                 }
             }
             return sb.ToString().Trim();
+        }
+
+        /// <summary>
+        /// Translates a text string using Google Translate API.
+        /// Preserves C# placeholders ({0}, {name}, ...) and Python placeholders (%(name)s, ...)
+        /// to avoid translation of formatting tokens.
+        /// </summary>
+        private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return text;
+
+            // 1. Protect Python placeholders: %(name)s, %(name)d, ...
+            var pythonPlaceholders = new Dictionary<string, string>();
+            int idx = 0;
+            string textWithPythonPlaceholders = text;
+            var pythonRegex = new Regex(@"%\([a-zA-Z_][a-zA-Z0-9_]*\)[diouxXeEfFgGcrs]");
+            foreach (Match match in pythonRegex.Matches(text))
+            {
+                string placeholder = match.Value;
+                string replacement = $"__PYPH_{idx}__";
+                textWithPythonPlaceholders = textWithPythonPlaceholders.Replace(placeholder, replacement);
+                pythonPlaceholders[replacement] = placeholder;
+                idx++;
+            }
+
+            // 2. Protect C# placeholders: {0}, {name}, ...
+            var csharpPlaceholders = new Dictionary<string, string>();
+            idx = 0;
+            string textWithCSharpPlaceholders = textWithPythonPlaceholders;
+            var csharpRegex = new Regex(@"\{[^{}]+\}");
+            foreach (Match match in csharpRegex.Matches(textWithPythonPlaceholders))
+            {
+                string placeholder = match.Value;
+                string replacement = $"__CSH_{idx}__";
+                textWithCSharpPlaceholders = textWithCSharpPlaceholders.Replace(placeholder, replacement);
+                csharpPlaceholders[replacement] = placeholder;
+                idx++;
+            }
+
+            // 3. Cache check
+            string cacheKey = ComputeMd5($"{targetLang}:{textWithCSharpPlaceholders}");
+            if (_useCache && _cache.TryGetValue(cacheKey, out string cached) && !string.IsNullOrEmpty(cached))
+            {
+                // Restore placeholders
+                string restored = cached;
+                foreach (var kvp in csharpPlaceholders)
+                    restored = restored.Replace(kvp.Key, kvp.Value);
+                foreach (var kvp in pythonPlaceholders)
+                    restored = restored.Replace(kvp.Key, kvp.Value);
+                return restored;
+            }
+
+            // 4. Translate with retries
+            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
+
+            int maxRetries = 3;
+            int delay = 1000;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
+
+                    var response = await _httpClient.GetAsync(url, linked.Token);
+                    string resp = await response.Content.ReadAsStringAsync(linked.Token);
+
+                    if (resp.TrimStart().StartsWith("<"))
+                    {
+                        Log($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
+                        await Task.Delay(delay * (attempt + 1), token);
+                        continue;
+                    }
+
+                    var json = JArray.Parse(resp);
+                    string translated = "";
+                    if (json[0] is JArray arr)
+                    {
+                        foreach (var item in arr)
+                            if (item[0] != null)
+                                translated += item[0].ToString();
+                    }
+
+                    if (!string.IsNullOrEmpty(translated))
+                    {
+                        translated = CleanWhitespace(translated);
+
+                        // Restore placeholders
+                        foreach (var kvp in csharpPlaceholders)
+                            translated = translated.Replace(kvp.Key, kvp.Value);
+                        foreach (var kvp in pythonPlaceholders)
+                            translated = translated.Replace(kvp.Key, kvp.Value);
+
+                        // Save to cache
+                        if (_useCache)
+                        {
+                            _cache[cacheKey] = translated;
+                            SaveCache();
+                        }
+                        return translated;
+                    }
+
+                    return text;
+                }
+                catch (Exception ex)
+                {
+                    Log($"Translation error: {ex.Message}");
+                    if (attempt < maxRetries - 1)
+                        await Task.Delay(delay * (attempt + 1), token);
+                }
+            }
+
+            return text;
         }
 
         private string ComputeMd5(string input)

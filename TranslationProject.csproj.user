@@ -30,8 +30,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Update="Google-AI.png">
+    <EmbeddedResource Update="Google-AI.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

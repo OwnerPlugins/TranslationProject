@@ -485,31 +485,31 @@
   <data name="&gt;&gt;btnStart.ZOrder" xml:space="preserve">
     <value>8</value>
   </data>
-  <data name="btnPause.Enabled" type="System.Boolean, mscorlib">
+  <data name="btnPauseProject.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
-  <data name="btnPause.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="btnPauseProject.Location" type="System.Drawing.Point, System.Drawing">
     <value>419, 158</value>
   </data>
-  <data name="btnPause.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="btnPauseProject.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
   </data>
-  <data name="btnPause.TabIndex" type="System.Int32, mscorlib">
+  <data name="btnPauseProject.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
   </data>
-  <data name="btnPause.Text" xml:space="preserve">
+  <data name="btnPauseProject.Text" xml:space="preserve">
     <value>Pause</value>
   </data>
-  <data name="&gt;&gt;btnPause.Name" xml:space="preserve">
-    <value>btnPause</value>
+  <data name="&gt;&gt;btnPauseProject.Name" xml:space="preserve">
+    <value>btnPauseProject</value>
   </data>
-  <data name="&gt;&gt;btnPause.Type" xml:space="preserve">
+  <data name="&gt;&gt;btnPauseProject.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;btnPause.Parent" xml:space="preserve">
+  <data name="&gt;&gt;btnPauseProject.Parent" xml:space="preserve">
     <value>panelProjectMode</value>
   </data>
-  <data name="&gt;&gt;btnPause.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;btnPauseProject.ZOrder" xml:space="preserve">
     <value>9</value>
   </data>
   <data name="btnStop.Enabled" type="System.Boolean, mscorlib">
@@ -567,7 +567,7 @@
     <value>0, 125</value>
   </data>
   <data name="panelProjectMode.Size" type="System.Drawing.Size, System.Drawing">
-    <value>950, 299</value>
+    <value>950, 316</value>
   </data>
   <data name="panelProjectMode.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -863,11 +863,38 @@
   <data name="&gt;&gt;btnTranslate.ZOrder" xml:space="preserve">
     <value>10</value>
   </data>
+  <data name="btnPauseEnigma2.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="btnPauseEnigma2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>488, 85</value>
+  </data>
+  <data name="btnPauseEnigma2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnPauseEnigma2.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="btnPauseEnigma2.Text" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="&gt;&gt;btnPauseEnigma2.Name" xml:space="preserve">
+    <value>btnPauseEnigma2</value>
+  </data>
+  <data name="&gt;&gt;btnPauseEnigma2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnPauseEnigma2.Parent" xml:space="preserve">
+    <value>panelEnigma2Mode</value>
+  </data>
+  <data name="&gt;&gt;btnPauseEnigma2.ZOrder" xml:space="preserve">
+    <value>11</value>
+  </data>
   <data name="btnCompile.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="btnCompile.Location" type="System.Drawing.Point, System.Drawing">
-    <value>490, 85</value>
+    <value>594, 85</value>
   </data>
   <data name="btnCompile.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -888,13 +915,13 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;btnCompile.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>12</value>
   </data>
   <data name="btnFullUpdate.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="btnFullUpdate.Location" type="System.Drawing.Point, System.Drawing">
-    <value>600, 85</value>
+    <value>698, 85</value>
   </data>
   <data name="btnFullUpdate.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -915,13 +942,13 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;btnFullUpdate.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>13</value>
   </data>
   <data name="btnStopEnigma2.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="btnStopEnigma2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>710, 85</value>
+    <value>804, 85</value>
   </data>
   <data name="btnStopEnigma2.Size" type="System.Drawing.Size, System.Drawing">
     <value>100, 30</value>
@@ -942,7 +969,7 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;btnStopEnigma2.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>14</value>
   </data>
   <data name="progressBarEnigma2.Location" type="System.Drawing.Point, System.Drawing">
     <value>240, 349</value>
@@ -966,7 +993,7 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;progressBarEnigma2.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>15</value>
   </data>
   <data name="lblStatus.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt, style=Bold</value>
@@ -996,7 +1023,7 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;lblStatus.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>16</value>
   </data>
   <data name="lblCounter.Location" type="System.Drawing.Point, System.Drawing">
     <value>18, 348</value>
@@ -1020,7 +1047,7 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;lblCounter.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>17</value>
   </data>
   <data name="lblTimer.Location" type="System.Drawing.Point, System.Drawing">
     <value>758, 348</value>
@@ -1044,7 +1071,7 @@
     <value>panelEnigma2Mode</value>
   </data>
   <data name="&gt;&gt;lblTimer.ZOrder" xml:space="preserve">
-    <value>17</value>
+    <value>18</value>
   </data>
   <data name="panelEnigma2Mode.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 125</value>
@@ -1118,6 +1145,30 @@
   <data name="&gt;&gt;btnSaveLog.ZOrder" xml:space="preserve">
     <value>13</value>
   </data>
+  <data name="btnExit.Location" type="System.Drawing.Point, System.Drawing">
+    <value>645, 87</value>
+  </data>
+  <data name="btnExit.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 30</value>
+  </data>
+  <data name="btnExit.TabIndex" type="System.Int32, mscorlib">
+    <value>100</value>
+  </data>
+  <data name="btnExit.Text" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="&gt;&gt;btnExit.Name" xml:space="preserve">
+    <value>btnExit</value>
+  </data>
+  <data name="&gt;&gt;btnExit.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btnExit.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;btnExit.ZOrder" xml:space="preserve">
+    <value>15</value>
+  </data>
   <data name="lblMonitor.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -1180,7 +1231,7 @@
     <value>11</value>
   </data>
   <data name="picLogo.Location" type="System.Drawing.Point, System.Drawing">
-    <value>746, 35</value>
+    <value>768, 35</value>
   </data>
   <data name="picLogo.Size" type="System.Drawing.Size, System.Drawing">
     <value>150, 75</value>

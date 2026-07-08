@@ -14,11 +14,13 @@ namespace TranslationProject
         private readonly string _cacheFile;
         private readonly Action<string> _log;
         private bool _useCache = true;
+        private readonly ManualResetEventSlim _pauseEvent;
 
-        public Enigma2TranslationManager(Action<string> logCallback, string cachePath)
+        public Enigma2TranslationManager(Action<string> logCallback, string cachePath, ManualResetEventSlim pauseEvent = null)
         {
             _log = logCallback;
             _cacheFile = cachePath;
+            _pauseEvent = pauseEvent;
             LoadCache();
             _httpClient.Timeout = TimeSpan.FromSeconds(10);
         }
@@ -178,6 +180,11 @@ namespace TranslationProject
             {
                 token.ThrowIfCancellationRequested();
 
+                // ============================================================
+                // PAUS
+                // ============================================================
+                _pauseEvent?.Wait(token);
+
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
 
                 string translationToWrite;
@@ -201,7 +208,6 @@ namespace TranslationProject
                     translationToWrite = translationToWrite + "\\n";
                 }
 
-                // FORCE FIX: Remove invalid backslashes AND escape quotes
                 translationToWrite = EscapeForPo(translationToWrite);
 
                 po.Add($"msgstr \"{translationToWrite}\"");
@@ -251,6 +257,12 @@ namespace TranslationProject
             foreach (var lang in languages)
             {
                 token.ThrowIfCancellationRequested();
+
+                // ============================================================
+                // PAUSE
+                // ============================================================
+                _pauseEvent?.Wait(token);
+
                 current++;
                 _log?.Invoke($"[{current}/{total}] {lang}");
 
@@ -266,15 +278,52 @@ namespace TranslationProject
             _log?.Invoke("=== Update completed ===");
         }
 
+        /// <summary>
+        /// Translates a text string while preserving Python‑style placeholders
+        /// (%(name)s, %(name)d, %(name)f, ...) and C#‑style placeholders ({0}, {name}).
+        /// </summary>
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            // 1. Protect escape sequences AND quotes
-            var escapeMap = new Dictionary<string, string>();
-            string protectedText = text;
+            // ------------------------------------------------------------
+            // 1. Protect Python‑style placeholders: %(name)s, %(name)d, etc.
+            // ------------------------------------------------------------
+            var pythonPlaceholders = new Dictionary<string, string>();
             int idx = 0;
+            string textWithPythonPlaceholders = text;
+            var pythonRegex = new Regex(@"%\([a-zA-Z_][a-zA-Z0-9_]*\)[diouxXeEfFgGcrs]");
+            foreach (Match match in pythonRegex.Matches(text))
+            {
+                string placeholder = match.Value;
+                string replacement = $"__PYPH_{idx}__";
+                textWithPythonPlaceholders = textWithPythonPlaceholders.Replace(placeholder, replacement);
+                pythonPlaceholders[replacement] = placeholder;
+                idx++;
+            }
 
+            // ------------------------------------------------------------
+            // 2. Protect C#‑style placeholders: {0}, {name}, ...
+            // ------------------------------------------------------------
+            var csharpPlaceholders = new Dictionary<string, string>();
+            idx = 0;
+            string textWithCSharpPlaceholders = textWithPythonPlaceholders;
+            var csharpRegex = new Regex(@"\{[^{}]+\}");
+            foreach (Match match in csharpRegex.Matches(textWithPythonPlaceholders))
+            {
+                string placeholder = match.Value;
+                string replacement = $"__CSH_{idx}__";
+                textWithCSharpPlaceholders = textWithCSharpPlaceholders.Replace(placeholder, replacement);
+                csharpPlaceholders[replacement] = placeholder;
+                idx++;
+            }
+
+            // ------------------------------------------------------------
+            // 3. Protect escape sequences and double quotes
+            // ------------------------------------------------------------
+            var escapeMap = new Dictionary<string, string>();
+            idx = 0;
+            string protectedText = textWithCSharpPlaceholders;
             var escapeRegex = new Regex(@"\\[ntr\""]|\\\\");
             protectedText = escapeRegex.Replace(protectedText, match =>
             {
@@ -283,26 +332,38 @@ namespace TranslationProject
                 idx++;
                 return placeholder;
             });
-
             protectedText = protectedText.Replace("\"", "__QUOTE__");
             escapeMap["__QUOTE__"] = "\\\"";
 
-            // 2. Cache check
+            // ------------------------------------------------------------
+            // 4. Check cache (using the protected string as key)
+            // ------------------------------------------------------------
             if (_useCache)
             {
                 string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
                 if (_cache.TryGetValue(cacheKey, out string cached))
                 {
                     if (!string.IsNullOrEmpty(cached))
-                        return RestoreEscapes(cached, escapeMap);
+                    {
+                        string restored = RestoreEscapes(cached, escapeMap);
+                        // Restore C# placeholders
+                        foreach (var kvp in csharpPlaceholders)
+                            restored = restored.Replace(kvp.Key, kvp.Value);
+                        // Restore Python placeholders
+                        foreach (var kvp in pythonPlaceholders)
+                            restored = restored.Replace(kvp.Key, kvp.Value);
+                        return restored;
+                    }
                 }
             }
 
-            // 3. Translate with retry
+            // ------------------------------------------------------------
+            // 5. Perform translation (with retries)
+            // ------------------------------------------------------------
             string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
 
             int maxRetries = 3;
-            int delay = 1000; // milliseconds
+            int delay = 1000; // ms
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -314,7 +375,7 @@ namespace TranslationProject
                     var response = await _httpClient.GetAsync(url, linked.Token);
                     string resp = await response.Content.ReadAsStringAsync(linked.Token);
 
-                    // Check if response is HTML (starts with <) – indicates error/block
+                    // If the response is HTML, it's an error – retry
                     if (resp.TrimStart().StartsWith("<"))
                     {
                         _log?.Invoke($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
@@ -323,7 +384,6 @@ namespace TranslationProject
                     }
 
                     var json = JArray.Parse(resp);
-
                     string translated = "";
                     if (json[0] is JArray arr)
                     {
@@ -337,6 +397,15 @@ namespace TranslationProject
                         translated = CleanWhitespace(translated);
                         translated = RestoreEscapes(translated, escapeMap);
 
+                        // Restore C# placeholders
+                        foreach (var kvp in csharpPlaceholders)
+                            translated = translated.Replace(kvp.Key, kvp.Value);
+
+                        // Restore Python placeholders
+                        foreach (var kvp in pythonPlaceholders)
+                            translated = translated.Replace(kvp.Key, kvp.Value);
+
+                        // Save to cache
                         if (_useCache)
                         {
                             string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
@@ -352,9 +421,7 @@ namespace TranslationProject
                 {
                     _log?.Invoke($"Translation error for {targetLang}: {ex.Message}");
                     if (attempt < maxRetries - 1)
-                    {
                         await Task.Delay(delay * (attempt + 1), token);
-                    }
                 }
             }
 

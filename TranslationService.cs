@@ -92,7 +92,7 @@ namespace TranslationProject
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            // Placeholder protection
+            // 1. Protect placeholders { ... }
             var placeholders = new Dictionary<string, string>();
             int idx = 0;
             string textWithPlaceholders = text;
@@ -106,7 +106,7 @@ namespace TranslationProject
                 idx++;
             }
 
-            // Cache
+            // 2. Cache
             string cacheKey = ComputeMd5($"{targetLang}:{text}");
             if (_cache.TryGetValue(cacheKey, out string cached))
                 return cached;
@@ -133,6 +133,7 @@ namespace TranslationProject
                 if (!string.IsNullOrEmpty(translated))
                 {
                     translated = CleanWhitespace(translated);
+                    // Restore placeholders
                     foreach (var kvp in placeholders)
                         translated = translated.Replace(kvp.Key, kvp.Value);
 

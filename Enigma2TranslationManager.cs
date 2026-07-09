@@ -15,6 +15,8 @@ namespace TranslationProject
         private readonly Action<string> _log;
         private bool _useCache = true;
         private readonly ManualResetEventSlim _pauseEvent;
+        private int _cacheHits = 0;
+        private int _cacheMisses = 0;
 
         public Enigma2TranslationManager(Action<string> logCallback, string cachePath, ManualResetEventSlim pauseEvent = null)
         {
@@ -127,8 +129,23 @@ namespace TranslationProject
             _log?.Invoke($"POT: {potFile} ({strings.Count} entries)");
         }
 
+        /// <summary>
+        /// Updates a .po file with translations from the .pot template.
+        /// Preserves existing translations and auto-translates missing ones.
+        /// Supports Pause (async via ManualResetEventSlim) and Stop (via CancellationToken).
+        /// </summary>
+        /// <param name="poFile">Path to the .po file to update</param>
+        /// <param name="potFile">Path to the .pot template file</param>
+        /// <param name="targetLang">Target language code (e.g., "it", "fr")</param>
+        /// <param name="token">Cancellation token for Stop operation</param>
         public async Task UpdatePoFileAsync(string poFile, string potFile, string targetLang, CancellationToken token)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            _log?.Invoke($"  ⏱️ Starting translation for: {targetLang}");
+
+            // ============================================================
+            // 1. READ ALL MSGIDS FROM POT FILE
+            // ============================================================
             var potLines = File.ReadAllLines(potFile, Encoding.UTF8);
             var msgids = new List<string>();
             foreach (var line in potLines)
@@ -141,6 +158,9 @@ namespace TranslationProject
                 }
             }
 
+            // ============================================================
+            // 2. LOAD EXISTING TRANSLATIONS FROM PO FILE
+            // ============================================================
             var existing = new Dictionary<string, string>();
             if (File.Exists(poFile))
             {
@@ -158,6 +178,9 @@ namespace TranslationProject
                 }
             }
 
+            // ============================================================
+            // 3. BUILD NEW PO FILE CONTENT
+            // ============================================================
             var po = new List<string>();
             po.Add($"# {targetLang} translations");
             po.Add("# Copyright (C) 2026 Lululla Team");
@@ -175,16 +198,29 @@ namespace TranslationProject
             po.Add("\"Content-Transfer-Encoding: 8bit\\n\"");
             po.Add("");
 
+            // ============================================================
+            // 4. PROCESS EACH STRING
+            // ============================================================
             int translated = 0;
+            int totalStrings = msgids.Count;
+            int processed = 0;
+
             foreach (var msgid in msgids)
             {
+                // ------------------------------------------------------------
+                // PAUSE CHECK (async) - waits if paused, does not block UI
+                // ------------------------------------------------------------
+                if (_pauseEvent != null)
+                {
+                    await Task.Run(() => _pauseEvent.Wait(token), token);
+                }
+
+                // ------------------------------------------------------------
+                // STOP CHECK - throws if cancellation requested
+                // ------------------------------------------------------------
                 token.ThrowIfCancellationRequested();
 
-                // ============================================================
-                // PAUS
-                // ============================================================
-                _pauseEvent?.Wait(token);
-
+                processed++;
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
 
                 string translationToWrite;
@@ -198,7 +234,9 @@ namespace TranslationProject
                     translated++;
                 }
 
+                // ------------------------------------------------------------
                 // FORCE FIX: Ensure \n matching for ALL translations
+                // ------------------------------------------------------------
                 if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
                 {
                     translationToWrite = "\\n" + translationToWrite;
@@ -208,19 +246,204 @@ namespace TranslationProject
                     translationToWrite = translationToWrite + "\\n";
                 }
 
+                // ------------------------------------------------------------
+                // ESCAPE QUOTES AND INVALID BACKSLASHES
+                // ------------------------------------------------------------
                 translationToWrite = EscapeForPo(translationToWrite);
 
                 po.Add($"msgstr \"{translationToWrite}\"");
                 po.Add("");
+
+                // ------------------------------------------------------------
+                // PAUSE CHECK AGAIN (async) - immediate response
+                // ------------------------------------------------------------
+                if (_pauseEvent != null)
+                {
+                    await Task.Run(() => _pauseEvent.Wait(token), token);
+                }
+
+                // Log progress every 50 strings
+                if (processed % 50 == 0)
+                {
+                    _log?.Invoke($"  📊 [{targetLang.ToUpper()}]: {processed}/{totalStrings} strings processed");
+                }
             }
+
+            // ============================================================
+            // 5. COMPLETE AND SAVE
+            // ============================================================
+            stopwatch.Stop();
 
             if (translated > 0)
                 _log?.Invoke($"  {targetLang}: translated {translated} new strings");
+
+            _log?.Invoke($"  ⏱️ {targetLang}: completed in {stopwatch.ElapsedMilliseconds}ms, {translated} new translations");
 
             Directory.CreateDirectory(Path.GetDirectoryName(poFile));
             File.WriteAllLines(poFile, po, new UTF8Encoding(false));
         }
 
+        /*
+        public async Task UpdatePoFileAsync(string poFile, string potFile, string targetLang, CancellationToken token)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            _log?.Invoke($"  ⏱️ Starting translation for: {targetLang}");
+
+            // ============================================================
+            // 1. READ ALL MSGIDS FROM POT FILE
+            // ============================================================
+            var potLines = File.ReadAllLines(potFile, Encoding.UTF8);
+            var msgids = new List<string>();
+            foreach (var line in potLines)
+            {
+                if (line.StartsWith("msgid \""))
+                {
+                    string msgid = line.Substring(7, line.Length - 8);
+                    if (!string.IsNullOrEmpty(msgid))
+                        msgids.Add(msgid);
+                }
+            }
+
+            // ============================================================
+            // 2. LOAD EXISTING TRANSLATIONS FROM PO FILE (if it exists)
+            // ============================================================
+            var existing = new Dictionary<string, string>();
+            if (File.Exists(poFile))
+            {
+                var poLines = File.ReadAllLines(poFile, Encoding.UTF8);
+                string currentId = null;
+                foreach (var line in poLines)
+                {
+                    if (line.StartsWith("msgid \""))
+                        currentId = line.Substring(7, line.Length - 8);
+                    else if (line.StartsWith("msgstr \"") && currentId != null)
+                    {
+                        existing[currentId] = line.Substring(8, line.Length - 9);
+                        currentId = null;
+                    }
+                }
+            }
+
+            // ============================================================
+            // 3. BUILD NEW PO FILE CONTENT
+            // ============================================================
+            var po = new List<string>();
+            po.Add($"# {targetLang} translations");
+            po.Add("# Copyright (C) 2026 Lululla Team");
+            po.Add("#");
+            po.Add("msgid \"\"");
+            po.Add("msgstr \"\"");
+            po.Add($"\"Project-Id-Version: PACKAGE VERSION\\n\"");
+            po.Add($"\"POT-Creation-Date: \\n\"");
+            po.Add($"\"PO-Revision-Date: \\n\"");
+            po.Add($"\"Last-Translator: \\n\"");
+            po.Add($"\"Language-Team: {targetLang} <ekekaz@gmail.com>\\n\"");
+            po.Add($"\"Language: {targetLang}\\n\"");
+            po.Add("\"MIME-Version: 1.0\\n\"");
+            po.Add("\"Content-Type: text/plain; charset=UTF-8\\n\"");
+            po.Add("\"Content-Transfer-Encoding: 8bit\\n\"");
+            po.Add("");
+
+            // ============================================================
+            // 4. PROCESS EACH STRING
+            // ============================================================
+            int translated = 0;
+            int totalStrings = msgids.Count;
+            int processed = 0;
+
+            foreach (var msgid in msgids)
+            {
+                // ------------------------------------------------------------
+                // PAUSE CHECK (async) - waits if paused, does not block UI
+                // ------------------------------------------------------------
+                if (_pauseEvent != null)
+                {
+                    await Task.Run(() => _pauseEvent.Wait(token), token);
+                }
+
+                // ------------------------------------------------------------
+                // STOP CHECK - throws if cancellation requested
+                // ------------------------------------------------------------
+                token.ThrowIfCancellationRequested();
+
+                processed++;
+                po.Add($"msgid \"{EscapeForPo(msgid)}\"");
+
+                string translationToWrite;
+
+                // Check if translation already exists in the .po file
+                if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
+                {
+                    // Existing translation - check if it needs escaping
+                    // If it contains " without \", it's not properly escaped
+                    if (existingTranslation.Contains("\"") && !existingTranslation.Contains("\\\""))
+                    {
+                        translationToWrite = EscapeForPo(existingTranslation);
+                    }
+                    else
+                    {
+                        translationToWrite = existingTranslation;
+                    }
+                }
+                else
+                {
+                    // New translation - TranslateAsync already escapes quotes and handles \n
+                    translationToWrite = await TranslateAsync(msgid, targetLang, token);
+                    translated++;
+                }
+
+                // ------------------------------------------------------------
+                // FIX: Ensure \n matches at start/end of string
+                // ------------------------------------------------------------
+                if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
+                    translationToWrite = "\\n" + translationToWrite;
+                if (msgid.EndsWith("\\n") && !translationToWrite.EndsWith("\\n"))
+                    translationToWrite = translationToWrite + "\\n";
+
+                // ------------------------------------------------------------
+                // ADD TO PO FILE
+                // IMPORTANT: DO NOT call EscapeForPo here again!
+                // translationToWrite is already properly escaped by TranslateAsync
+                // or by the check above for existing translations.
+                // ------------------------------------------------------------
+                po.Add($"msgstr \"{translationToWrite}\"");
+                po.Add("");
+
+                // ------------------------------------------------------------
+                // PAUSE CHECK AGAIN (async) - immediate response
+                // ------------------------------------------------------------
+                if (_pauseEvent != null)
+                {
+                    await Task.Run(() => _pauseEvent.Wait(token), token);
+                }
+
+                // Log progress every 50 strings
+                if (processed % 50 == 0)
+                {
+                    _log?.Invoke($"  📊 [{targetLang.ToUpper()}]: {processed}/{totalStrings} strings processed");
+                }
+            }
+
+            // ============================================================
+            // 5. COMPLETE AND SAVE
+            // ============================================================
+            stopwatch.Stop();
+
+            if (translated > 0)
+                _log?.Invoke($"  {targetLang}: translated {translated} new strings");
+
+            _log?.Invoke($"  ⏱️ {targetLang}: completed in {stopwatch.ElapsedMilliseconds}ms, {translated} new translations");
+
+            // Save .po file
+            Directory.CreateDirectory(Path.GetDirectoryName(poFile));
+            File.WriteAllLines(poFile, po, new UTF8Encoding(false));
+        } */
+
+        /// <summary>
+        /// Escapes special characters for gettext .po file format.
+        /// Handles double quotes and invalid backslash sequences.
+        /// Keeps \n, \t, \r, \", \\ as valid escape sequences.
+        /// </summary>
         private string EscapeForPo(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
@@ -228,12 +451,17 @@ namespace TranslationProject
             // Escape double quotes
             string result = input.Replace("\"", "\\\"");
 
-            // Remove invalid backslash sequences
+            // Remove invalid backslash sequences (keep only \n, \t, \r, \", \\)
             result = Regex.Replace(result, @"\\(?![ntr\""\\])", "");
 
             return result;
         }
 
+        /// <summary>
+        /// Full update workflow for Enigma2 plugins.
+        /// Extracts strings, updates POT, translates all languages, and compiles MO files.
+        /// Supports Pause (async) and Stop (CancellationToken).
+        /// </summary>
         public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
         {
             string pluginName = string.IsNullOrEmpty(customPluginName)
@@ -256,12 +484,18 @@ namespace TranslationProject
             int current = 0;
             foreach (var lang in languages)
             {
-                token.ThrowIfCancellationRequested();
+                // ============================================================
+                // CHECK PAUSE (ASYNC) - does not block UI
+                // ============================================================
+                if (_pauseEvent != null)
+                {
+                    await Task.Run(() => _pauseEvent.Wait(token), token);
+                }
 
                 // ============================================================
-                // PAUSE
+                // CHECK STOP
                 // ============================================================
-                _pauseEvent?.Wait(token);
+                token.ThrowIfCancellationRequested();
 
                 current++;
                 _log?.Invoke($"[{current}/{total}] {lang}");
@@ -278,16 +512,12 @@ namespace TranslationProject
             _log?.Invoke("=== Update completed ===");
         }
 
-        /// <summary>
-        /// Translates a text string while preserving Python‑style placeholders
-        /// (%(name)s, %(name)d, %(name)f, ...) and C#‑style placeholders ({0}, {name}).
-        /// </summary>
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
             // ------------------------------------------------------------
-            // 1. Protect Python‑style placeholders: %(name)s, %(name)d, etc.
+            // 1. Protect Python placeholders: %(name)s, %(name)d, etc.
             // ------------------------------------------------------------
             var pythonPlaceholders = new Dictionary<string, string>();
             int idx = 0;
@@ -303,7 +533,7 @@ namespace TranslationProject
             }
 
             // ------------------------------------------------------------
-            // 2. Protect C#‑style placeholders: {0}, {name}, ...
+            // 2. Protect C# placeholders: {0}, {name}, ...
             // ------------------------------------------------------------
             var csharpPlaceholders = new Dictionary<string, string>();
             idx = 0;
@@ -332,11 +562,12 @@ namespace TranslationProject
                 idx++;
                 return placeholder;
             });
+
             protectedText = protectedText.Replace("\"", "__QUOTE__");
             escapeMap["__QUOTE__"] = "\\\"";
 
             // ------------------------------------------------------------
-            // 4. Check cache (using the protected string as key)
+            // 4. Check cache
             // ------------------------------------------------------------
             if (_useCache)
             {
@@ -345,6 +576,7 @@ namespace TranslationProject
                 {
                     if (!string.IsNullOrEmpty(cached))
                     {
+                        _cacheHits++;
                         string restored = RestoreEscapes(cached, escapeMap);
                         // Restore C# placeholders
                         foreach (var kvp in csharpPlaceholders)
@@ -355,31 +587,51 @@ namespace TranslationProject
                         return restored;
                     }
                 }
+                _cacheMisses++;
             }
 
             // ------------------------------------------------------------
-            // 5. Perform translation (with retries)
+            // 5. Translate with retries
             // ------------------------------------------------------------
             string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
 
             int maxRetries = 3;
-            int delay = 1000; // ms
+            int baseDelay = 2000;
+            Random random = new Random();
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 try
                 {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                    var requestStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                     using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
 
                     var response = await _httpClient.GetAsync(url, linked.Token);
                     string resp = await response.Content.ReadAsStringAsync(linked.Token);
 
-                    // If the response is HTML, it's an error – retry
+                    requestStopwatch.Stop();
+
+                    // Log with [LANG] in UPPERCASE
+                    _log?.Invoke($"  📡 [{targetLang.ToUpper()}]: request {attempt + 1}/{maxRetries} took {requestStopwatch.ElapsedMilliseconds}ms, status: {response.StatusCode}");
+
                     if (resp.TrimStart().StartsWith("<"))
                     {
-                        _log?.Invoke($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
-                        await Task.Delay(delay * (attempt + 1), token);
+                        if (attempt >= maxRetries - 1)
+                        {
+                            _log?.Invoke($"  ❌ [{targetLang.ToUpper()}]: HTML response, all retries exhausted. Returning original text.");
+                            return text;
+                        }
+
+                        int jitter = random.Next(0, 500);
+                        int delay = baseDelay * (attempt + 1) + jitter;
+                        _log?.Invoke($"  ⚠️ [{targetLang.ToUpper()}]: HTML response, retry {attempt + 1}/{maxRetries} (delay: {delay}ms)");
+
+                        string htmlPreview = resp.Length > 200 ? resp.Substring(0, 200) + "..." : resp;
+                        _log?.Invoke($"  📄 HTML preview: {htmlPreview}");
+
+                        await Task.Delay(delay, token);
                         continue;
                     }
 
@@ -412,20 +664,30 @@ namespace TranslationProject
                             _cache[cacheKey] = translated;
                             SaveCache();
                         }
+
+                        // Log with [LANG] in UPPERCASE
+                        _log?.Invoke($"  ✅ [{targetLang.ToUpper()}]: translated successfully (attempt {attempt + 1})");
                         return translated;
                     }
 
-                    return text; // No translation returned
+                    return text;
                 }
                 catch (Exception ex)
                 {
-                    _log?.Invoke($"Translation error for {targetLang}: {ex.Message}");
-                    if (attempt < maxRetries - 1)
-                        await Task.Delay(delay * (attempt + 1), token);
+                    if (attempt >= maxRetries - 1)
+                    {
+                        _log?.Invoke($"  ❌ [{targetLang.ToUpper()}]: all retries exhausted: {ex.Message}");
+                        return text;
+                    }
+
+                    int jitter = random.Next(0, 500);
+                    int delay = baseDelay * (attempt + 1) + jitter;
+                    _log?.Invoke($"  ⚠️ [{targetLang.ToUpper()}]: error (attempt {attempt + 1}/{maxRetries}): {ex.Message}. Retrying in {delay}ms");
+                    await Task.Delay(delay, token);
                 }
             }
 
-            return text; // Fallback after all retries
+            return text;
         }
 
         private string RestoreEscapes(string input, Dictionary<string, string> escapeMap)
@@ -536,6 +798,19 @@ namespace TranslationProject
                 File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
             }
             catch { }
+        }
+
+        public void LogCacheStats()
+        {
+            int total = _cacheHits + _cacheMisses;
+            if (total == 0)
+            {
+                _log?.Invoke($"📊 Cache: No requests made");
+                return;
+            }
+
+            double hitRate = (double)_cacheHits / total * 100;
+            _log?.Invoke($"📊 Cache stats: Hits={_cacheHits}, Misses={_cacheMisses}, Total={total}, Hit Rate={hitRate:F1}%");
         }
     }
 }

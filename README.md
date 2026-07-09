@@ -1,4 +1,4 @@
-# Translation Tool v2.5 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.6 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.5-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.6-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -198,21 +198,28 @@ plugin/locale/
 
 ```
 TranslationProject/
-├── TranslationProject.exe        # Main executable
-├── Google-AI.png                 # Logo (optional)
-├── app.ico                       # Application icon
-├── translation_cache.json        # Cache file (auto-generated)
-└── locale/                       # Enigma2 translation files
-    ├── it/
-    │   └── LC_MESSAGES/
-    │       ├── plugin.po
-    │       └── plugin.mo
-    └── ...
+├── TranslationProject.exe          # Main executable
+└── TranslationProject.dll.config   # Enigma2 translation files
 ```
 
 ---
 
 ## 🔧 Changelog
+
+### Version 2.6 – 2026-07-09
+- **Added:** Async Pause/Resume support – no more UI blocking.
+- **Added:** Recursive cache search in C# mode (subfolders up to 2 levels).
+- **Added:** Clearer Pause/Stop feedback messages.
+- **Fixed:** Enigma2 cache now always saved in `locale/` folder.
+- **Fixed:** Double escaping of quotes in `.po` files.
+- **Fixed:** Syntax errors in Hebrew and Arabic `.po` files – now uses NGettext.
+- **Fixed:** "Use Cache" checkbox resets when switching modes.
+- **Fixed:** Pause/Stop now respond immediately (check before and after each string).
+- **Fixed:** Cache found in subdirectories in C# mode.
+- **Removed:** `extracted_strings.txt` generation.
+- **Removed:** `TranslationService.cs` (unused and causing issues).
+- **Improved:** `.mo` compilation uses NGettext (no `msgfmt.exe` dependency).
+- **Improved:** Logging shows `[LANG]` prefix in Enigma2 translation.
 
 ### Version 2.5 – 2026-07-08
 - **Added:** Separate Pause/Resume buttons for C# and Enigma2 modes (each mode has its own dedicated button).

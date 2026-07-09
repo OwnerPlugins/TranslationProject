@@ -46,7 +46,6 @@ namespace TranslationProject
             chkLanguages = new CheckedListBox();
             btnSelectAll = new Button();
             btnUnselectAll = new Button();
-            btnExtract = new Button();
             btnTranslate = new Button();
             btnPauseEnigma2 = new Button();
             btnCompile = new Button();
@@ -202,7 +201,6 @@ namespace TranslationProject
             panelEnigma2Mode.Controls.Add(chkLanguages);
             panelEnigma2Mode.Controls.Add(btnSelectAll);
             panelEnigma2Mode.Controls.Add(btnUnselectAll);
-            panelEnigma2Mode.Controls.Add(btnExtract);
             panelEnigma2Mode.Controls.Add(btnTranslate);
             panelEnigma2Mode.Controls.Add(btnPauseEnigma2);
             panelEnigma2Mode.Controls.Add(btnCompile);
@@ -264,14 +262,6 @@ namespace TranslationProject
             resources.ApplyResources(btnUnselectAll, "btnUnselectAll");
             btnUnselectAll.Name = "btnUnselectAll";
             btnUnselectAll.Click += BtnUnselectAll_Click;
-            // 
-            // btnExtract
-            // 
-            btnExtract.BackColor = Color.LightYellow;
-            resources.ApplyResources(btnExtract, "btnExtract");
-            btnExtract.Name = "btnExtract";
-            btnExtract.UseVisualStyleBackColor = false;
-            btnExtract.Click += BtnExtract_Click;
             // 
             // btnTranslate
             // 
@@ -468,7 +458,7 @@ namespace TranslationProject
         private CheckedListBox chkLanguages;
         private Button btnSelectAll;
         private Button btnUnselectAll;
-        private Button btnExtract;
+        /* private Button btnExtract; */
         private Button btnTranslate;
         private Button btnPauseEnigma2;
         private Button btnCompile;

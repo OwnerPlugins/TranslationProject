@@ -26,15 +26,15 @@ jobs:
     - name: Pubblica l'app
       run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish_exe --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
 
-    - name: Copia msgfmt.exe
-      run: |
-        if (Test-Path "msgfmt.exe") {
-            Copy-Item "msgfmt.exe" "./publish_exe/" -Force
-            Write-Host "✅ msgfmt.exe copiato"
-        } else {
-            Write-Host "⚠️ msgfmt.exe non trovato"
-            exit 1
-        }
+    # - name: Copia msgfmt.exe
+      # run: |
+        # if (Test-Path "msgfmt.exe") {
+            # Copy-Item "msgfmt.exe" "./publish_exe/" -Force
+            # Write-Host "✅ msgfmt.exe copiato"
+        # } else {
+            # Write-Host "⚠️ msgfmt.exe non trovato"
+            # exit 1
+        # }
 
     - name: Crea zip
       run: Compress-Archive -Path ./publish_exe/* -DestinationPath ./TranslationProject.zip -Force

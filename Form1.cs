@@ -13,6 +13,7 @@ namespace TranslationProject
         private readonly HttpClient _httpClient = new HttpClient();
         private Dictionary<string, string> _cache = new Dictionary<string, string>();
         private string _cacheFile;
+        private bool _suppressCacheCheck = false;
         private string _projectFolder;
         private string _outputFolder;
         private CancellationTokenSource _cts;
@@ -34,6 +35,7 @@ namespace TranslationProject
         private int _processedItems = 0;
         private System.Windows.Forms.Timer _timer;
         private const string SEPARATOR = "::";
+
 
         private readonly Dictionary<string, string> _allLanguages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -234,8 +236,9 @@ namespace TranslationProject
             bool isBusy = (_cts != null && !_cts.IsCancellationRequested) ||
                           (_ctsEnigma2 != null && !_ctsEnigma2.IsCancellationRequested);
 
-            btnExtract.Enabled = _isPluginFolderSelected && !isBusy;
-            btnTranslate.Enabled = _isExtracted && !isBusy;
+            Log($"UpdateButtonsState: _isPluginFolderSelected={_isPluginFolderSelected}, isBusy={isBusy}");
+
+            btnTranslate.Enabled = _isPluginFolderSelected && !isBusy;
             btnCompile.Enabled = _isTranslated && !isBusy;
             btnFullUpdate.Enabled = _isPluginFolderSelected && !isBusy;
         }
@@ -250,7 +253,7 @@ namespace TranslationProject
 
             // Disable Full Update and other buttons during operations
             btnFullUpdate.Enabled = _isPluginFolderSelected && !isBusy;
-            btnExtract.Enabled = _isPluginFolderSelected && !isBusy;
+            /* btnExtract.Enabled = _isPluginFolderSelected && !isBusy; */
             btnTranslate.Enabled = _isExtracted && !isBusy;
             btnCompile.Enabled = _isTranslated && !isBusy;
         }
@@ -355,7 +358,6 @@ namespace TranslationProject
 
         private void BtnPause_Click(object sender, EventArgs e)
         {
-            // Check if any operation is running (C# or Enigma2)
             bool isRunning = (_cts != null && !_cts.IsCancellationRequested) ||
                              (_ctsEnigma2 != null && !_ctsEnigma2.IsCancellationRequested);
 
@@ -370,13 +372,12 @@ namespace TranslationProject
                 // Resume
                 _isPaused = false;
                 _pauseEvent.Set();
-                // Update both buttons (the visible one will reflect the change)
                 btnPauseProject.Text = "Pause";
                 btnPauseProject.BackColor = Color.Yellow;
                 btnPauseEnigma2.Text = "Pause";
                 btnPauseEnigma2.BackColor = Color.Yellow;
-                Log("Resumed.");
-                UpdateStatus("Running", Color.Blue);
+                Log("▶️ Resumed.");
+                UpdateStatus("▶️ Running", Color.Blue);
             }
             else
             {
@@ -387,76 +388,12 @@ namespace TranslationProject
                 btnPauseProject.BackColor = Color.Gold;
                 btnPauseEnigma2.Text = "Resume";
                 btnPauseEnigma2.BackColor = Color.Gold;
-                Log("Paused.");
-                UpdateStatus("Paused", Color.Orange);
+                Log("⏸️ Paused.");
+                Log("⚠️ Finishing current string before pausing... You can resume later.");
+                UpdateStatus("⏸️ Pausing... (finishing current string)", Color.Orange);
             }
         }
 
-        // ================================================================
-        // CACHE CHECK ON BROWSE (ONLY)
-        // ================================================================
-        private void CheckCacheOnFolder(string folderPath, string context)
-        {
-            if (!_useCache)
-            {
-                Log($"Cache disabled, skipping check for {context}");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-            {
-                Log($"Invalid folder for cache check: {folderPath}");
-                return;
-            }
-
-            string cacheFile = Path.Combine(folderPath, "translation_cache.json");
-            Log($"Checking for cache in {context}: {cacheFile}");
-
-            if (!File.Exists(cacheFile))
-            {
-                Log($"No cache file found in {context}");
-                return;
-            }
-
-            Log($"Cache file found in {context}");
-
-            bool alreadyLoaded = _cache != null && _cache.Count > 0;
-            string msg = alreadyLoaded
-                ? $"Cache file found in {context}:\n{cacheFile}\n\nCurrent cache has {_cache.Count} entries.\n\nUse this cache instead?"
-                : $"Cache file found in {context}:\n{cacheFile}\n\nUse it?";
-
-            var result = MessageBox.Show(msg, "Cache Found", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
-            {
-                try
-                {
-                    string json = File.ReadAllText(cacheFile, Encoding.UTF8);
-                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                    if (loaded != null && loaded.Count > 0)
-                    {
-                        _cache = loaded;
-                        _cacheFile = cacheFile;
-                        Log($"Cache loaded from {context}: {_cache.Count} entries");
-                    }
-                    else
-                    {
-                        Log($"Cache file in {context} is empty");
-                        _cache = new Dictionary<string, string>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log($"Error loading cache from {context}: {ex.Message}");
-                    _cache = new Dictionary<string, string>();
-                }
-            }
-            else
-            {
-                Log($"Cache in {context} ignored by user");
-                _cache = new Dictionary<string, string>();
-            }
-        }
 
         // ================================================================
         // EVENTS - MODE
@@ -477,6 +414,14 @@ namespace TranslationProject
             _isPluginFolderSelected = false;
             _isExtracted = false;
             _isTranslated = false;
+
+            // ============================================================
+            // RESET CACHE FLAG when switching mode
+            // ============================================================
+            _useCache = false;
+            chkUseCacheGlobal.Checked = false;
+            _cache = new Dictionary<string, string>();
+
             UpdateButtonsState();
             UpdateCacheButtonsState();
             ResetMonitor();
@@ -497,18 +442,10 @@ namespace TranslationProject
                     _outputFolder = Path.Combine(selectedPath, "languages");
                     Log($"Project folder selected: {selectedPath}");
 
-                    // IF THE FLAG IS ALREADY ACTIVE, CHECK IMMEDIATELY
-                    if (_useCache)
-                    {
-                        ChkUseCacheGlobal_CheckedChanged(sender, e);
-                    }
-                    else
-                    {
-                        Log("Cache disabled. Enable 'Use Cache' to check for existing cache file.");
-                    }
+                    // ALWAYS CHECK FOR CACHE FILE (regardless of checkbox state)
+                    CheckAndLoadCache();
 
                     UpdateCacheButtonsState();
-
                     ShowLogArea();
                     this.Refresh();
                 }
@@ -576,8 +513,6 @@ namespace TranslationProject
             Log($"Starting translation. Output: {_outputFolder}");
             Log($"Cache file: {_cacheFile}");
 
-            // NO CACHE CHECK HERE - ONLY ON BROWSE
-
             LoadCache();
             SaveCache();
 
@@ -590,9 +525,13 @@ namespace TranslationProject
             btnPauseProject.Enabled = true;
             btnPauseProject.Text = "Pause";
             btnPauseProject.BackColor = Color.Yellow;
-            btnPauseEnigma2.Enabled = false; // Ensure the other is disabled
+            btnPauseEnigma2.Enabled = false;
             _isPaused = false;
             _pauseEvent.Set();
+
+            // Disable cache buttons during operation
+            btnImportCacheGlobal.Enabled = false;
+            btnDeleteCacheGlobal.Enabled = false;
 
             progressBar.Visible = true;
             rtxtLog.Clear();
@@ -619,14 +558,22 @@ namespace TranslationProject
                 _cts?.Dispose();
                 _cts = null;
                 SaveCache();
+
+                // Re-enable cache buttons if folder is valid
+                UpdateCacheButtonsState();
             }
         }
+
+        // ================================================================
+        // STOP BUTTONS – resume pause before cancelling
+        // ================================================================
 
         private void BtnStop_Click(object sender, EventArgs e)
         {
             _pauseEvent.Set();
             _cts?.Cancel();
-            Log("Stopping...");
+            Log("⏹️ Stop requested...");
+            Log("⚠️ Finishing current string before stopping...");
             btnStop.Enabled = false;
             btnPauseProject.Enabled = false;
         }
@@ -634,6 +581,57 @@ namespace TranslationProject
         // ================================================================
         // EVENTS - ENIGMA2
         // ================================================================
+        /// <summary>
+        /// Detects the PluginLanguagePath from __init__.py or plugin.py
+        /// Example: PluginLanguagePath = 'Extensions/vavoo/locale'
+        /// Returns the path or null if not found.
+        /// </summary>
+        private string DetectPluginLocalePath(string pluginPath)
+        {
+            try
+            {
+                string[] filesToCheck = { "__init__.py", "plugin.py" };
+                var allPyFiles = Directory.GetFiles(pluginPath, "*.py", SearchOption.TopDirectoryOnly);
+                var priorityFiles = new List<string>();
+
+                foreach (var f in filesToCheck)
+                {
+                    string fullPath = Path.Combine(pluginPath, f);
+                    if (File.Exists(fullPath))
+                        priorityFiles.Add(fullPath);
+                }
+
+                foreach (var file in allPyFiles)
+                {
+                    if (!priorityFiles.Contains(file))
+                        priorityFiles.Add(file);
+                }
+
+                foreach (var file in priorityFiles)
+                {
+                    string fileName = Path.GetFileName(file);
+                    if (fileName.StartsWith("test_") || fileName == "update_translation.py" || fileName == "translate_utils.py")
+                        continue;
+
+                    string content = File.ReadAllText(file, Encoding.UTF8);
+
+                    // Look for: PluginLanguagePath = "path"
+                    var regex = new Regex(@"PluginLanguagePath\s*=\s*[""']([^""']+)[""']");
+                    var match = regex.Match(content);
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value.Trim();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error detecting PluginLanguagePath: {ex.Message}");
+            }
+
+            return null;
+        }
+
         private void BtnBrowsePlugin_Click(object sender, EventArgs e)
         {
             using (var fbd = new FolderBrowserDialog())
@@ -646,9 +644,7 @@ namespace TranslationProject
                     _isExtracted = false;
                     _isTranslated = false;
 
-                    // ============================================================
-                    // AUTO-DETECT PluginLanguageDomain
-                    // ============================================================
+                    // Auto-detect PluginLanguageDomain
                     string detectedName = DetectPluginLanguageDomain(selectedPath);
                     if (!string.IsNullOrEmpty(detectedName))
                     {
@@ -663,15 +659,11 @@ namespace TranslationProject
 
                     Log($"Plugin folder selected: {selectedPath}");
 
-                    // CHECK CACHE IMMEDIATELY
-                    string outputFolder = Path.Combine(selectedPath, "languages");
-                    _outputFolder = outputFolder;
-                    CheckCacheOnFolder(outputFolder, "plugin (languages folder)");
+                    // ALWAYS CHECK FOR CACHE FILE (regardless of checkbox state)
+                    CheckAndLoadCache();
 
                     UpdateButtonsState();
                     UpdateCacheButtonsState();
-                    btnImportCacheGlobal.Enabled = true;
-                    btnDeleteCacheGlobal.Enabled = true;
                     ResetMonitor();
                     ShowLogArea();
                     this.Refresh();
@@ -698,62 +690,18 @@ namespace TranslationProject
 
         private void BtnStopEnigma2_Click(object sender, EventArgs e)
         {
+            _pauseEvent.Set();
             _ctsEnigma2?.Cancel();
-            Log("Stop requested...");
+            Log("⏹️ Stop requested...");
+            Log("⚠️ Finishing current string before stopping... Compile will be available.");
             btnStopEnigma2.Enabled = false;
             btnPauseEnigma2.Enabled = false;
-        }
-
-        private async void BtnExtract_Click(object sender, EventArgs e)
-        {
-            if (!_isPluginFolderSelected) return;
-            string pluginPath = txtPluginPath.Text.Trim();
-            if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
-
-            _ctsEnigma2 = new CancellationTokenSource();
-            btnStopEnigma2.Enabled = true;
-            btnExtract.Enabled = false;
-            btnFullUpdate.Enabled = false;
-            btnImportCacheGlobal.Enabled = false;
-            btnDeleteCacheGlobal.Enabled = false;
-
-            ShowLogArea();
-            this.Refresh();
-            try
-            {
-                Log("Extracting strings...");
-                StartOperation(2, "Extracting", progressBarEnigma2);
-
-                var manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
-                var python = manager.ExtractPythonStrings(pluginPath);
-                var xml = manager.ExtractXmlStrings(pluginPath);
-                var all = python.Union(xml).Distinct().ToList();
-
-                Log($"Python: {python.Count}, XML: {xml.Count}, Total: {all.Count}");
-                string output = Path.Combine(pluginPath, "extracted_strings.txt");
-                File.WriteAllLines(output, all.OrderBy(s => s));
-                Log($"Saved: {output}");
-
-                _isExtracted = true;
-                _isTranslated = false;
-                UpdateButtonsState();
-                EndOperation($"Done! {all.Count} strings", Color.DarkGreen);
-            }
-            catch (OperationCanceledException) { Log("Cancelled."); EndOperation("Cancelled", Color.Orange); }
-            catch (Exception ex) { Log($"ERROR: {ex.Message}"); EndOperation($"ERROR", Color.Red); }
-            finally
-            {
-                btnStopEnigma2.Enabled = false;
-                btnExtract.Enabled = true;
-                _ctsEnigma2?.Dispose();
-                _ctsEnigma2 = null;
-                UpdateButtonsState();
-            }
+            btnCompile.Enabled = true;
         }
 
         private async void BtnTranslate_Click(object sender, EventArgs e)
         {
-            if (!_isExtracted) return;
+            if (!_isPluginFolderSelected) return;
             string pluginPath = txtPluginPath.Text.Trim();
             if (string.IsNullOrEmpty(pluginPath) || !Directory.Exists(pluginPath)) { Log("Invalid folder."); return; }
 
@@ -762,30 +710,42 @@ namespace TranslationProject
 
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
-            // Enable only the Enigma2 pause button
             btnPauseEnigma2.Enabled = true;
             btnPauseEnigma2.Text = "Pause";
             btnPauseEnigma2.BackColor = Color.Yellow;
             btnPauseProject.Enabled = false;
             _isPaused = false;
             _pauseEvent.Set();
+
             btnTranslate.Enabled = false;
             btnFullUpdate.Enabled = false;
-            btnExtract.Enabled = false;
+            btnCompile.Enabled = false;
             btnImportCacheGlobal.Enabled = false;
-            btnDeleteCacheGlobal.Enabled = false; 
+            btnDeleteCacheGlobal.Enabled = false;
 
+            int translatedCount = 0;
 
             try
             {
                 Log($"Translating to: {string.Join(", ", selectedLangs)}");
-                _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
+                string cachePath = Path.Combine(pluginPath, "locale", "translation_cache.json");
+                Directory.CreateDirectory(Path.GetDirectoryName(cachePath)); // assicura che locale esista
+                _enigma2Manager = new Enigma2TranslationManager(Log, cachePath, _pauseEvent);
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
+                // ============================================================
+                // EXTRACT STRINGS AUTOMATICALLY (no separate button needed)
+                // ============================================================
+                Log("Extracting strings...");
                 var python = _enigma2Manager.ExtractPythonStrings(pluginPath);
                 var xml = _enigma2Manager.ExtractXmlStrings(pluginPath);
                 var all = python.Union(xml).Distinct().ToList();
+                Log($"Python: {python.Count}, XML: {xml.Count}, Total: {all.Count}");
+                _isExtracted = true;
 
+                // ============================================================
+                // GENERATE POT AND TRANSLATE
+                // ============================================================
                 string pluginName = GetPluginName(pluginPath);
                 string potFile = Path.Combine(pluginPath, "locale", $"{pluginName}.pot");
                 _enigma2Manager.UpdatePot(potFile, all, pluginName);
@@ -805,14 +765,34 @@ namespace TranslationProject
                     string poFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.po");
                     await _enigma2Manager.UpdatePoFileAsync(poFile, potFile, lang, _ctsEnigma2.Token);
                     Log($"  Updated: {lang}");
+                    translatedCount++;
                 }
 
                 _isTranslated = true;
                 UpdateButtonsState();
                 EndOperation($"Done! {total} languages", Color.DarkGreen);
+                _enigma2Manager.LogCacheStats();
             }
-            catch (OperationCanceledException) { Log("Cancelled."); EndOperation("Cancelled", Color.Orange); }
-            catch (Exception ex) { Log($"ERROR: {ex.Message}"); EndOperation($"ERROR", Color.Red); }
+            catch (OperationCanceledException)
+            {
+                Log("Cancelled.");
+                if (translatedCount > 0)
+                {
+                    _isTranslated = true;
+                    Log($"Compile enabled: {translatedCount} language(s) translated before stop.");
+                }
+                else
+                {
+                    _isTranslated = false;
+                    Log("No languages were fully translated. Compile remains disabled.");
+                }
+                EndOperation("Cancelled", Color.Orange);
+            }
+            catch (Exception ex)
+            {
+                Log($"ERROR: {ex.Message}");
+                EndOperation($"ERROR", Color.Red);
+            }
             finally
             {
                 btnStopEnigma2.Enabled = false;
@@ -825,6 +805,7 @@ namespace TranslationProject
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
                 UpdateButtonsState();
+                UpdateCacheButtonsState();
             }
         }
 
@@ -845,7 +826,7 @@ namespace TranslationProject
             btnStopEnigma2.Enabled = true;
             btnCompile.Enabled = false;
             btnFullUpdate.Enabled = false;
-            btnExtract.Enabled = false;
+            /* btnExtract.Enabled = false; */
             btnTranslate.Enabled = false;
             btnImportCacheGlobal.Enabled = false;
             btnDeleteCacheGlobal.Enabled = false;
@@ -906,6 +887,7 @@ namespace TranslationProject
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
                 UpdateButtonsState();
+                UpdateCacheButtonsState();
             }
         }
 
@@ -920,7 +902,6 @@ namespace TranslationProject
 
             _ctsEnigma2 = new CancellationTokenSource();
             btnStopEnigma2.Enabled = true;
-            // Enable only the Enigma2 pause button
             btnPauseEnigma2.Enabled = true;
             btnPauseEnigma2.Text = "Pause";
             btnPauseEnigma2.BackColor = Color.Yellow;
@@ -928,24 +909,29 @@ namespace TranslationProject
             _isPaused = false;
             _pauseEvent.Set();
             btnFullUpdate.Enabled = false;
-            btnExtract.Enabled = false;
+            /* btnExtract.Enabled = false; */
             btnTranslate.Enabled = false;
             btnCompile.Enabled = false;
             btnImportCacheGlobal.Enabled = false;
             btnDeleteCacheGlobal.Enabled = false;
+
             try
             {
                 string pluginName = GetPluginName(pluginPath);
                 Log($"Full Update: {pluginName}");
                 Log($"Languages: {string.Join(", ", selectedLangs)}");
-                _enigma2Manager = new Enigma2TranslationManager(Log, Path.Combine(pluginPath, "translation_cache.json"));
+                string cachePath = Path.Combine(pluginPath, "locale", "translation_cache.json");
+                Directory.CreateDirectory(Path.GetDirectoryName(cachePath));
+                _enigma2Manager = new Enigma2TranslationManager(Log, cachePath, _pauseEvent);
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
+                // FullUpdate already does extraction inside RunFullUpdateAsync
                 await _enigma2Manager.RunFullUpdateAsync(pluginPath, selectedLangs, _ctsEnigma2.Token, pluginName);
 
                 _isExtracted = true;
                 _isTranslated = true;
                 UpdateButtonsState();
+                _enigma2Manager.LogCacheStats();
                 Log("Full update completed.");
             }
             catch (OperationCanceledException) { Log("Cancelled."); }
@@ -962,6 +948,7 @@ namespace TranslationProject
                 _ctsEnigma2?.Dispose();
                 _ctsEnigma2 = null;
                 UpdateButtonsState();
+                UpdateCacheButtonsState();
             }
         }
 
@@ -995,67 +982,178 @@ namespace TranslationProject
 
         private void ChkUseCacheGlobal_CheckedChanged(object sender, EventArgs e)
         {
+            // If this event was triggered by code (not user), skip
+            if (_suppressCacheCheck)
+            {
+                _suppressCacheCheck = false;
+                return;
+            }
+
             _useCache = chkUseCacheGlobal.Checked;
             Log($"Cache: {(_useCache ? "ENABLED" : "DISABLED")}");
 
-            if (!_useCache) return;
+            // Always check for cache file
+            CheckAndLoadCache();
+        }
 
-            // ================================================================
-            // DETERMINE THE PATH TO CHECK
-            // ================================================================
-            string cacheFile = null;
+        /// <summary>
+        /// Unified method to check for cache file in the current context (C# or Enigma2).
+        /// Always checks regardless of _useCache state.
+        /// C#: searches recursively in subfolders up to 2 levels deep.
+        /// Enigma2: checks ONLY locale/ folder.
+        /// </summary>
+        private void CheckAndLoadCache()
+        {
+            string cacheFolder = null;
             string context = "";
+            bool isCSharpMode = cmbMode.SelectedIndex == 0;
 
-            if (chkUseOutput.Checked && !string.IsNullOrEmpty(txtOutputPath.Text) && Directory.Exists(txtOutputPath.Text))
+            if (isCSharpMode)
             {
-                // Custom output enabled → check ONLY the output folder
-                cacheFile = Path.Combine(txtOutputPath.Text.Trim(), "translation_cache.json");
-                context = "Custom Output Folder";
-                Log($"Custom output enabled: checking output folder only...");
-            }
-            else if (!string.IsNullOrEmpty(txtProjectPath.Text) && Directory.Exists(txtProjectPath.Text))
-            {
-                // Custom output NOT enabled → check project/languages
-                string langFolder = Path.Combine(txtProjectPath.Text.Trim(), "languages");
-                if (Directory.Exists(langFolder))
+                // ============================================================
+                // C# MODE: cache is in "languages" folder or custom output
+                // ============================================================
+                if (chkUseOutput.Checked && !string.IsNullOrEmpty(txtOutputPath.Text) && Directory.Exists(txtOutputPath.Text))
                 {
-                    cacheFile = Path.Combine(langFolder, "translation_cache.json");
-                    context = "Project → languages";
+                    cacheFolder = txtOutputPath.Text.Trim();
+                    context = "Custom Output Folder (C#)";
+                    CheckSingleCacheFile(cacheFolder, context);
+                }
+                else if (!string.IsNullOrEmpty(txtProjectPath.Text) && Directory.Exists(txtProjectPath.Text))
+                {
+                    string basePath = txtProjectPath.Text.Trim();
+                    string foundCache = FindCacheRecursive(basePath);
+
+                    if (!string.IsNullOrEmpty(foundCache))
+                    {
+                        string folder = Path.GetDirectoryName(foundCache);
+                        CheckSingleCacheFile(folder, $"Project languages folder (found in: {Path.GetFileName(Path.GetDirectoryName(foundCache))})");
+                    }
+                    else
+                    {
+                        // Default: check basePath/languages/
+                        string defaultFolder = Path.Combine(basePath, "languages");
+                        CheckSingleCacheFile(defaultFolder, "Project languages folder (default)");
+                    }
                 }
                 else
                 {
-                    Log($"Languages folder not found: {langFolder}");
-                    _cache = new Dictionary<string, string>();
-                    return;
-                }
-            }
-            else if (!string.IsNullOrEmpty(txtPluginPath.Text) && Directory.Exists(txtPluginPath.Text))
-            {
-                // Enigma2 mode
-                string langFolder = Path.Combine(txtPluginPath.Text.Trim(), "languages");
-                if (Directory.Exists(langFolder))
-                {
-                    cacheFile = Path.Combine(langFolder, "translation_cache.json");
-                    context = "Plugin → languages";
-                }
-                else
-                {
-                    Log($"Languages folder not found: {langFolder}");
+                    Log("No valid C# project folder selected.");
                     _cache = new Dictionary<string, string>();
                     return;
                 }
             }
             else
             {
-                Log("No valid folder selected. Please select a project or plugin folder first.");
+                // ============================================================
+                // ENIGMA2 MODE: cache is ONLY in "locale" folder
+                // ============================================================
+                if (string.IsNullOrEmpty(txtPluginPath.Text) || !Directory.Exists(txtPluginPath.Text))
+                {
+                    Log("No valid Enigma2 plugin folder selected.");
+                    _cache = new Dictionary<string, string>();
+                    return;
+                }
+
+                string pluginRoot = txtPluginPath.Text.Trim();
+                string localeFolder = Path.Combine(pluginRoot, "locale");
+                CheckSingleCacheFile(localeFolder, "Plugin locale folder");
+            }
+        }
+
+        /// <summary>
+        /// Recursively searches for translation_cache.json in subfolders up to 2 levels deep.
+        /// Returns the full path to the cache file if found, otherwise null.
+        /// </summary>
+        private string FindCacheRecursive(string basePath)
+        {
+            if (string.IsNullOrEmpty(basePath) || !Directory.Exists(basePath))
+                return null;
+
+            try
+            {
+                // Check immediate languages folder
+                string immediate = Path.Combine(basePath, "languages", "translation_cache.json");
+                if (File.Exists(immediate))
+                    return immediate;
+
+                // Check up to 2 levels deep
+                foreach (var subDir in Directory.GetDirectories(basePath, "*", SearchOption.TopDirectoryOnly))
+                {
+                    string subPath = Path.Combine(subDir, "languages", "translation_cache.json");
+                    if (File.Exists(subPath))
+                        return subPath;
+
+                    // Check one more level deep
+                    foreach (var subSubDir in Directory.GetDirectories(subDir, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        string subSubPath = Path.Combine(subSubDir, "languages", "translation_cache.json");
+                        if (File.Exists(subSubPath))
+                            return subSubPath;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error searching for cache: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets detailed information about a cache file for display in MessageBox.
+        /// </summary>
+        private string GetCacheFileDetails(string cacheFile)
+        {
+            if (!File.Exists(cacheFile))
+                return "File not found";
+
+            try
+            {
+                FileInfo fi = new FileInfo(cacheFile);
+                string fileSize = $"{fi.Length / 1024.0:F1} KB";
+                DateTime fileDate = fi.LastWriteTime;
+                int entries = 0;
+
+                try
+                {
+                    string json = File.ReadAllText(cacheFile, Encoding.UTF8);
+                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    entries = loaded?.Count ?? 0;
+                }
+                catch { }
+
+                return $"📍 {Path.GetFileName(cacheFile)}\n" +
+                       $"📂 Path: {cacheFile}\n" +
+                       $"📊 Entries: {entries}\n" +
+                       $"📦 Size: {fileSize}\n" +
+                       $"📅 Modified: {fileDate:yyyy-MM-dd HH:mm:ss}";
+            }
+            catch (Exception ex)
+            {
+                return $"Error reading file: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Helper method to check a single cache file and show appropriate MessageBox.
+        /// If cache is disabled and user says YES, it enables cache and loads directly.
+        /// If cache is enabled and user says YES, it loads directly.
+        /// If user says NO and cache is disabled, it deletes the file.
+        /// If user says NO and cache is enabled, it ignores the file (keeps it).
+        /// </summary>
+        private void CheckSingleCacheFile(string folderPath, string context)
+        {
+            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            {
+                Log($"Folder does not exist: {folderPath}");
                 _cache = new Dictionary<string, string>();
                 return;
             }
 
-            // ================================================================
-            // CHECK THE FILE
-            // ================================================================
-            Log($"Checking cache in {context}: {cacheFile}");
+            string cacheFile = Path.Combine(folderPath, "translation_cache.json");
+            Log($"Checking cache: {cacheFile}");
 
             if (!File.Exists(cacheFile))
             {
@@ -1064,59 +1162,117 @@ namespace TranslationProject
                 return;
             }
 
-            // ================================================================
+            // ============================================================
             // READ FILE DETAILS
-            // ================================================================
+            // ============================================================
             int entries = 0;
             DateTime fileDate = File.GetLastWriteTime(cacheFile);
+            string fileSize = "";
             try
             {
+                FileInfo fi = new FileInfo(cacheFile);
+                fileSize = $"{fi.Length / 1024.0:F1} KB";
+
                 string json = File.ReadAllText(cacheFile, Encoding.UTF8);
                 var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                 entries = loaded?.Count ?? 0;
             }
             catch { }
 
-            // ================================================================
-            // MESSAGE BOX WITH ALL DETAILS
-            // ================================================================
-            string msg = $"📁 Cache file found!\n\n" +
-                         $"📍 Location: {cacheFile}\n" +
-                         $"📊 Entries: {entries}\n" +
-                         $"📅 Last modified: {fileDate:yyyy-MM-dd HH:mm:ss}\n" +
-                         $"📁 Folder: {Path.GetDirectoryName(cacheFile)}\n\n" +
-                         $"Use this cache?";
-
-            var result = MessageBox.Show(msg, "Cache Found", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            // ============================================================
+            // SHOW MESSAGE BASED ON CACHE STATE
+            // ============================================================
+            if (_useCache)
             {
-                try
+                // Cache is enabled: ask Yes/No
+                string msg = $"📁 Cache file found!\n\n" +
+                             $"📍 Location: {cacheFile}\n" +
+                             $"📊 Entries: {entries}\n" +
+                             $"📦 Size: {fileSize}\n" +
+                             $"📅 Last modified: {fileDate:yyyy-MM-dd HH:mm:ss}\n" +
+                             $"📁 Folder: {Path.GetDirectoryName(cacheFile)}\n\n" +
+                             $"Use this cache?";
+
+                var result = MessageBox.Show(msg, "Cache Found", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
                 {
-                    string json = File.ReadAllText(cacheFile, Encoding.UTF8);
-                    var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                    if (loaded != null && loaded.Count > 0)
-                    {
-                        _cache = loaded;
-                        _cacheFile = cacheFile;
-                        Log($"✅ Cache loaded: {_cache.Count} entries from {context}");
-                    }
-                    else
-                    {
-                        _cache = new Dictionary<string, string>();
-                        Log($"⚠️ Cache file is empty");
-                    }
+                    LoadCacheFromFile(cacheFile, context);
                 }
-                catch (Exception ex)
+                else
                 {
-                    Log($"❌ Error loading cache: {ex.Message}");
+                    // User said NO - keep the file but don't load it
                     _cache = new Dictionary<string, string>();
+                    Log($"⏭️ Cache from {context} ignored by user (file kept)");
                 }
             }
             else
             {
+                // Cache is disabled: offer to enable it OR delete it
+                string msg = $"📁 Cache file found but cache is DISABLED!\n\n" +
+                             $"📍 Location: {cacheFile}\n" +
+                             $"📊 Entries: {entries}\n" +
+                             $"📦 Size: {fileSize}\n" +
+                             $"📅 Last modified: {fileDate:yyyy-MM-dd HH:mm:ss}\n" +
+                             $"📁 Folder: {Path.GetDirectoryName(cacheFile)}\n\n" +
+                             $"What would you like to do?\n\n" +
+                             $"• YES  → Enable cache and USE this file\n" +
+                             $"• NO   → DELETE this file (start fresh)";
+
+                var result = MessageBox.Show(msg, "Cache Found - Disabled", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    _useCache = true;
+                    _suppressCacheCheck = true;
+                    chkUseCacheGlobal.Checked = true;
+                    LoadCacheFromFile(cacheFile, context);
+                }
+                else
+                {
+                    // User said NO - delete the cache file and start fresh
+                    try
+                    {
+                        File.Delete(cacheFile);
+                        _cache = new Dictionary<string, string>();
+                        Log($"🗑️ Cache file deleted: {cacheFile}");
+                        Log("Cache remains disabled. A new cache file will be created during translation.");
+                        MessageBox.Show("Cache file deleted. A new one will be created when needed.", "Cache Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"❌ Error deleting cache: {ex.Message}");
+                        MessageBox.Show($"Error deleting cache: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Helper method to load cache from a file
+        /// </summary>
+        private void LoadCacheFromFile(string cacheFile, string context)
+        {
+            try
+            {
+                string json = File.ReadAllText(cacheFile, Encoding.UTF8);
+                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                if (loaded != null && loaded.Count > 0)
+                {
+                    _cache = loaded;
+                    _cacheFile = cacheFile;
+                    Log($"✅ Cache loaded: {_cache.Count} entries from {context}");
+                }
+                else
+                {
+                    _cache = new Dictionary<string, string>();
+                    Log($"⚠️ Cache file is empty");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ Error loading cache: {ex.Message}");
                 _cache = new Dictionary<string, string>();
-                Log($"⏭️ Cache from {context} ignored by user");
             }
         }
 
@@ -1272,9 +1428,6 @@ namespace TranslationProject
             }
         }
 
-        /// <summary>
-        /// Exits the application.
-        /// </summary>
         private void BtnExit_Click(object sender, EventArgs e)
         {
             Application.Exit();
@@ -1303,6 +1456,11 @@ namespace TranslationProject
         // ================================================================
         // CORE - C# PROJECT
         // ================================================================
+        /// <summary>
+        /// Main C# translation workflow.
+        /// Extracts keys, translates each language, and saves .lng files.
+        /// Supports Pause (async) and Stop (CancellationToken).
+        /// </summary>
         private async Task RunProjectTranslationAsync(CancellationToken token)
         {
             Log("Extracting GetTranslation keys...");
@@ -1316,9 +1474,16 @@ namespace TranslationProject
 
             foreach (var lang in _selectedLanguages)
             {
+                // ============================================================
+                // CHECK PAUSE (ASYNC) - does not block UI
+                // ============================================================
+                await Task.Run(() => _pauseEvent.Wait(token), token);
+
+                // ============================================================
+                // CHECK STOP
+                // ============================================================
                 token.ThrowIfCancellationRequested();
-                // PAUSA CHECK
-                _pauseEvent.Wait(token);
+
                 current++;
                 Log($"[{current}/{total}] {lang.Value}");
                 UpdateProgress(current);
@@ -1346,6 +1511,11 @@ namespace TranslationProject
             return keys;
         }
 
+        /// <summary>
+        /// Processes translation for a single language.
+        /// Loads existing translations, translates new keys, and saves the .lng file.
+        /// Supports Pause (async) and Stop (CancellationToken).
+        /// </summary>
         private async Task ProcessLanguageAsync(string code, string fileName, HashSet<string> keys, CancellationToken token)
         {
             string filePath = Path.Combine(_outputFolder, $"{fileName}.lng");
@@ -1355,23 +1525,38 @@ namespace TranslationProject
 
             foreach (string key in keys)
             {
+                // ============================================================
+                // CHECK PAUSE (ASYNC) - does not block UI
+                // ============================================================
+                await Task.Run(() => _pauseEvent.Wait(token), token);
+
+                // ============================================================
+                // CHECK STOP
+                // ============================================================
                 token.ThrowIfCancellationRequested();
+
                 if (translations.ContainsKey(key)) continue;
+
                 string translated = await TranslateAsync(key, code, token);
                 translations[key] = translated;
                 changed = true;
                 count++;
-                if (count % 50 == 0) Log($"  {count} new for {fileName}");
+
+                if (count % 50 == 0)
+                    Log($"  {count} new for {fileName}");
             }
 
+            // Remove obsolete keys
             var orphans = translations.Keys.Except(keys).ToList();
             if (orphans.Any())
             {
-                foreach (var k in orphans) translations.Remove(k);
+                foreach (var k in orphans)
+                    translations.Remove(k);
                 changed = true;
                 Log($"  removed {orphans.Count} obsolete");
             }
 
+            // Save if changed
             if (changed)
             {
                 var lines = translations
@@ -1472,10 +1657,6 @@ namespace TranslationProject
         // ================================================================
         // TRANSLATION HELPERS
         // ================================================================
-        /// <summary>
-        /// Translates a text string while preserving Python‑style placeholders
-        /// and C#‑style placeholders.
-        /// </summary>
         private async Task<string> TranslateTextAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
@@ -1596,9 +1777,9 @@ namespace TranslationProject
         }
 
         /// <summary>
-        /// Translates a text string using Google Translate API.
-        /// Preserves C# placeholders ({0}, {name}, ...) and Python placeholders (%(name)s, ...)
-        /// to avoid translation of formatting tokens.
+        /// Translates text using Google Translate API.
+        /// Preserves C# and Python placeholders.
+        /// Retries up to 5 times with exponential backoff.
         /// </summary>
         private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
@@ -1636,7 +1817,6 @@ namespace TranslationProject
             string cacheKey = ComputeMd5($"{targetLang}:{textWithCSharpPlaceholders}");
             if (_useCache && _cache.TryGetValue(cacheKey, out string cached) && !string.IsNullOrEmpty(cached))
             {
-                // Restore placeholders
                 string restored = cached;
                 foreach (var kvp in csharpPlaceholders)
                     restored = restored.Replace(kvp.Key, kvp.Value);
@@ -1648,23 +1828,43 @@ namespace TranslationProject
             // 4. Translate with retries
             string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
 
-            int maxRetries = 3;
-            int delay = 1000;
+            int maxRetries = 5;
+            int baseDelay = 2000;
+            Random random = new Random();
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 try
                 {
+                    var requestStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                     using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
 
                     var response = await _httpClient.GetAsync(url, linked.Token);
                     string resp = await response.Content.ReadAsStringAsync(linked.Token);
 
+                    requestStopwatch.Stop();
+
+                    // Log with [LANG] in UPPERCASE
+                    Log($"  📡 [{targetLang.ToUpper()}]: request {attempt + 1}/{maxRetries} took {requestStopwatch.ElapsedMilliseconds}ms, status: {response.StatusCode}");
+
                     if (resp.TrimStart().StartsWith("<"))
                     {
-                        Log($"HTML response for {targetLang}, retry {attempt + 1}/{maxRetries}");
-                        await Task.Delay(delay * (attempt + 1), token);
+                        if (attempt >= maxRetries - 1)
+                        {
+                            Log($"  ❌ [{targetLang.ToUpper()}]: HTML response, all retries exhausted. Returning original text.");
+                            return text;
+                        }
+
+                        int jitter = random.Next(0, 500);
+                        int delay = baseDelay * (attempt + 1) + jitter;
+                        Log($"  ⚠️ [{targetLang.ToUpper()}]: HTML response, retry {attempt + 1}/{maxRetries} (delay: {delay}ms)");
+
+                        string htmlPreview = resp.Length > 200 ? resp.Substring(0, 200) + "..." : resp;
+                        Log($"  📄 HTML preview: {htmlPreview}");
+
+                        await Task.Delay(delay, token);
                         continue;
                     }
 
@@ -1681,18 +1881,18 @@ namespace TranslationProject
                     {
                         translated = CleanWhitespace(translated);
 
-                        // Restore placeholders
                         foreach (var kvp in csharpPlaceholders)
                             translated = translated.Replace(kvp.Key, kvp.Value);
                         foreach (var kvp in pythonPlaceholders)
                             translated = translated.Replace(kvp.Key, kvp.Value);
 
-                        // Save to cache
                         if (_useCache)
                         {
                             _cache[cacheKey] = translated;
                             SaveCache();
                         }
+
+                        Log($"  ✅ [{targetLang.ToUpper()}]: translated successfully (attempt {attempt + 1})");
                         return translated;
                     }
 
@@ -1700,9 +1900,16 @@ namespace TranslationProject
                 }
                 catch (Exception ex)
                 {
-                    Log($"Translation error: {ex.Message}");
-                    if (attempt < maxRetries - 1)
-                        await Task.Delay(delay * (attempt + 1), token);
+                    if (attempt >= maxRetries - 1)
+                    {
+                        Log($"  ❌ [{targetLang.ToUpper()}]: all retries exhausted: {ex.Message}");
+                        return text;
+                    }
+
+                    int jitter = random.Next(0, 500);
+                    int delay = baseDelay * (attempt + 1) + jitter;
+                    Log($"  ⚠️ [{targetLang.ToUpper()}]: error (attempt {attempt + 1}/{maxRetries}): {ex.Message}. Retrying in {delay}ms");
+                    await Task.Delay(delay, token);
                 }
             }
 

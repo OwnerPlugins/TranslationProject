@@ -26,15 +26,19 @@ jobs:
     - name: Pubblica l'app
       run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish_exe --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
 
-    # - name: Copia msgfmt.exe
-      # run: |
-        # if (Test-Path "msgfmt.exe") {
-            # Copy-Item "msgfmt.exe" "./publish_exe/" -Force
-            # Write-Host "✅ msgfmt.exe copiato"
-        # } else {
-            # Write-Host "⚠️ msgfmt.exe non trovato"
-            # exit 1
-        # }
+    # ============================================================
+    # COPIA README.md NELLA CARTELLA DI PUBBLICAZIONE
+    # ============================================================
+    - name: Copia README.md e LICENSE
+      run: |
+        @("README.md", "LICENSE") | ForEach-Object {
+            if (Test-Path $_) {
+                Copy-Item $_ "./publish_exe/" -Force
+                Write-Host "✅ $_ copiato"
+            } else {
+                Write-Host "⚠️ $_ non trovato"
+            }
+        }
 
     - name: Crea zip
       run: Compress-Archive -Path ./publish_exe/* -DestinationPath ./TranslationProject.zip -Force
@@ -46,18 +50,9 @@ jobs:
 
     - name: Commit e push dello zip
       run: |
-        # Stash delle modifiche locali
         git stash push -m "workflow-stash" || echo "Nessuna modifica da stashare"
-        
-        # Pull con rebase
         git pull origin main --rebase || echo "Pull fallito, si procede comunque"
-        
-        # Rimuovi lo zip vecchio e aggiungi quello nuovo
         git add TranslationProject.zip
-        
-        # Commit solo se ci sono modifiche
         git commit -m "Aggiorna build - ${{ github.run_number }}" || echo "Nessuna modifica da committare"
-        
-        # Push con force-with-lease per sicurezza
         git push origin HEAD:main --force-with-lease
         

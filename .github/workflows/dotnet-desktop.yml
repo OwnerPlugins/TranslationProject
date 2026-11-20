@@ -1,58 +1,49 @@
-name: Build e commit dello zip con l'exe
+name: Build and release
 
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build-and-commit:
+  build:
     runs-on: windows-latest
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
 
-    - name: Pubblica l'app
-      run: dotnet publish TranslationProject.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o ./publish_exe --verbosity quiet -nowarn:CS8618,CS8602,CS8622,CS8625,CS8600,CS8601
+    - name: Publish single-file exe
+      run: dotnet publish TranslationProject.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o ./publish_exe
 
-    # ============================================================
-    # COPIA README.md NELLA CARTELLA DI PUBBLICAZIONE
-    # ============================================================
-    - name: Copia README.md e LICENSE
+    - name: Zip (exe + README + LICENSE)
       run: |
-        @("README.md", "LICENSE") | ForEach-Object {
-            if (Test-Path $_) {
-                Copy-Item $_ "./publish_exe/" -Force
-                Write-Host "✅ $_ copiato"
-            } else {
-                Write-Host "⚠️ $_ non trovato"
-            }
-        }
+        Copy-Item README.md, LICENSE ./publish_exe/ -ErrorAction SilentlyContinue
+        Compress-Archive -Path ./publish_exe/* -DestinationPath ./TranslationProject.zip -Force
 
-    - name: Crea zip
-      run: Compress-Archive -Path ./publish_exe/* -DestinationPath ./TranslationProject.zip -Force
+    # every push to main: build is downloadable from the Actions page (not committed to the repo)
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TranslationProject-${{ github.run_number }}
+        path: ./publish_exe/TranslationProject.exe
 
-    - name: Configura git
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-
-    - name: Commit e push dello zip
-      run: |
-        git stash push -m "workflow-stash" || echo "Nessuna modifica da stashare"
-        git pull origin main --rebase || echo "Pull fallito, si procede comunque"
-        git add TranslationProject.zip
-        git commit -m "Aggiorna build - ${{ github.run_number }}" || echo "Nessuna modifica da committare"
-        git push origin HEAD:main --force-with-lease
-        
+    # tag v2.8, v2.9 ...: create the GitHub Release with the exe and the zip
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Translation Tool ${{ github.ref_name }}
+        body_path: RELEASE_NOTES.md
+        files: |
+          ./publish_exe/TranslationProject.exe
+          ./TranslationProject.zip

@@ -1,9 +1,9 @@
-﻿namespace TranslationProject
+namespace TranslationProject
 {
     public class LanguageSelectorForm : Form
     {
         private CheckedListBox clbLanguages;
-        private Button btnSelectAll, btnUnselectAll, btnOK, btnCancel;
+        private Button btnSelectAll, btnUnselectAll, btnEssentials, btnOK, btnCancel;
         private readonly Dictionary<string, string> _allLanguages;
         private Dictionary<string, string> _selectedLanguages;
 
@@ -15,7 +15,7 @@
             _selectedLanguages = new Dictionary<string, string>(selectedLanguages ?? _allLanguages);
 
             this.Text = "Select Languages";
-            this.Size = new System.Drawing.Size(350, 500);
+            this.Size = new System.Drawing.Size(350, 540);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -40,14 +40,25 @@
 
             btnCancel = new Button { Text = "Cancel", Location = new System.Drawing.Point(265, 420), Size = new System.Drawing.Size(55, 30), DialogResult = DialogResult.Cancel };
 
-            this.Controls.AddRange(new Control[] { clbLanguages, btnSelectAll, btnUnselectAll, btnOK, btnCancel });
+            btnEssentials = new Button { Text = $"Default ({Languages.Essential.Length})", Location = new System.Drawing.Point(12, 456), Size = new System.Drawing.Size(186, 30) };
+            btnEssentials.Click += (s, e) =>
+            {
+                for (int i = 0; i < clbLanguages.Items.Count; i++)
+                    clbLanguages.SetItemChecked(i, Languages.IsEssential(CodeOf(clbLanguages.Items[i])));
+                clbLanguages.TopIndex = 0;
+            };
+
+            this.Controls.AddRange(new Control[] { clbLanguages, btnSelectAll, btnUnselectAll, btnEssentials, btnOK, btnCancel });
             PopulateLanguages();
         }
 
         private void PopulateLanguages()
         {
             clbLanguages.Items.Clear();
-            foreach (var kvp in _allLanguages.OrderBy(kvp => kvp.Value))
+            // essential languages first, then the others
+            foreach (var kvp in _allLanguages
+                         .OrderBy(kvp => Languages.IsEssential(kvp.Key) ? 0 : 1)
+                         .ThenBy(kvp => kvp.Value))
             {
                 int index = clbLanguages.Items.Add($"{kvp.Value} ({kvp.Key})");
                 if (_selectedLanguages.ContainsKey(kvp.Key))
@@ -55,12 +66,20 @@
             }
         }
 
+        private static string CodeOf(object item)
+        {
+            string text = item?.ToString() ?? "";
+            int start = text.LastIndexOf('(');
+            int end = text.LastIndexOf(')');
+            return (start >= 0 && end > start) ? text.Substring(start + 1, end - start - 1) : "";
+        }
+
         private void ApplySelection()
         {
             _selectedLanguages.Clear();
             foreach (var item in clbLanguages.CheckedItems)
             {
-                string text = item.ToString();
+                string text = item.ToString() ?? "";
                 int start = text.LastIndexOf('(');
                 int end = text.LastIndexOf(')');
                 if (start > 0 && end > start)

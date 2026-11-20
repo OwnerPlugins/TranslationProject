@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Build output / user settings
+bin/
+obj/
+publish/
+publish_exe/
+*.user

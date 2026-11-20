@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,15 +12,15 @@ namespace TranslationProject
         // ================================================================
         private readonly HttpClient _httpClient = new HttpClient();
         private Dictionary<string, string> _cache = new Dictionary<string, string>();
-        private string _cacheFile;
+        private string? _cacheFile;
         private bool _suppressCacheCheck = false;
-        private string _projectFolder;
-        private string _outputFolder;
-        private CancellationTokenSource _cts;
-        private CancellationTokenSource _ctsEnigma2;
+        private string? _projectFolder;
+        private string? _outputFolder;
+        private CancellationTokenSource? _cts;
+        private CancellationTokenSource? _ctsEnigma2;
         private Enigma2TranslationManager _enigma2Manager;
         private bool _useCache = true;
-        private ProgressBar _currentProgressBar;
+        private ProgressBar? _currentProgressBar;
 
         private bool _isPluginFolderSelected = false;
         private bool _isExtracted = false;
@@ -33,36 +33,12 @@ namespace TranslationProject
         private DateTime _operationStartTime;
         private int _totalItems = 0;
         private int _processedItems = 0;
-        private System.Windows.Forms.Timer _timer;
+        private System.Windows.Forms.Timer? _timer;
         private const string SEPARATOR = "::";
 
 
-        private readonly Dictionary<string, string> _allLanguages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "af", "Afrikaans" }, { "am", "Amharic" }, { "ar", "Arabic" }, { "az", "Azerbaijani" },
-            { "be", "Belarusian" }, { "bg", "Bulgarian" }, { "bn", "Bengali" }, { "bs", "Bosnian" },
-            { "ca", "Catalan" }, { "cs", "Czech" }, { "cy", "Welsh" }, { "da", "Danish" },
-            { "de", "Deutsch" }, { "el", "Greek" }, { "en", "English" }, { "en_GB", "English_GB" },
-            { "eo", "Esperanto" }, { "es", "Español" }, { "et", "Estonian" }, { "eu", "Basque" },
-            { "fa", "Persian" }, { "fi", "Finnish" }, { "fr", "Français" }, { "fy", "Frisian" },
-            { "ga", "Irish" }, { "gd", "Scottish Gaelic" }, { "gl", "Galician" }, { "gu", "Gujarati" },
-            { "he", "Hebrew" }, { "hi", "Hindi" }, { "hr", "Croatian" }, { "hu", "Hungarian" },
-            { "hy", "Armenian" }, { "id", "Indonesian" }, { "is", "Icelandic" }, { "it", "Italiano" },
-            { "ja", "Japanese" }, { "ka", "Georgian" }, { "kk", "Kazakh" }, { "km", "Khmer" },
-            { "kn", "Kannada" }, { "ko", "Korean" }, { "ku", "Kurdish" }, { "ky", "Kyrgyz" },
-            { "lt", "Lithuanian" }, { "lv", "Latvian" }, { "mk", "Macedonian" }, { "ml", "Malayalam" },
-            { "mn", "Mongolian" }, { "mr", "Marathi" }, { "ms", "Malay" }, { "mt", "Maltese" },
-            { "my", "Burmese" }, { "nb", "Norwegian Bokmål" }, { "ne", "Nepali" }, { "nl", "Dutch" },
-            { "no", "Norwegian" }, { "oc", "Occitan" }, { "or", "Odia" }, { "pa", "Punjabi" },
-            { "pl", "Polski" }, { "ps", "Pashto" }, { "pt", "Português" }, { "pt_BR", "Português_BR" },
-            { "pt_PT", "Português_PT" }, { "ro", "Romanian" }, { "ru", "Русский" }, { "si", "Sinhala" },
-            { "sk", "Slovak" }, { "sl", "Slovenian" }, { "sq", "Shqip" }, { "sq_AL", "Shqip_AL" },
-            { "sr", "Serbian" }, { "sr_Latn", "Serbian_Latin" }, { "sv", "Swedish" }, { "sw", "Swahili" },
-            { "ta", "Tamil" }, { "te", "Telugu" }, { "tg", "Tajik" }, { "th", "Thai" }, { "tk", "Turkmen" },
-            { "tl", "Tagalog" }, { "tr", "Türk" }, { "tt", "Tatar" }, { "ug", "Uyghur" }, { "uk", "Ukrainian" },
-            { "ur", "Urdu" }, { "uz", "Uzbek" }, { "vi", "Vietnamese" }, { "yi", "Yiddish" },
-            { "zh", "中国人" }, { "zh_CN", "简体中文" }, { "zh_HK", "Chinese_HK" }, { "zh_SG", "Chinese_SG" }, { "zh_TW", "Chinese_TW" }
-        };
+        // Full list and the 15 default languages live in Languages.cs
+        private readonly Dictionary<string, string> _allLanguages = Languages.All;
 
         private Dictionary<string, string> _selectedLanguages;
 
@@ -71,8 +47,10 @@ namespace TranslationProject
         // ================================================================
         public Form1()
         {
-            _selectedLanguages = new Dictionary<string, string>(_allLanguages);
+            // Default: only the essential languages (Select All still gives all of them)
+            _selectedLanguages = Languages.EssentialSet();
             InitializeComponent();
+            AddEssentialsButton();
 
             _useCache = false;
             chkUseCacheGlobal.Checked = false;
@@ -150,15 +128,47 @@ namespace TranslationProject
         {
             if (chkLanguages == null) return;
             chkLanguages.Items.Clear();
-            foreach (var lang in _allLanguages.OrderBy(kvp => kvp.Value))
+            // essential languages on top (checked), then all the others (unchecked)
+            var ordered = _allLanguages
+                .OrderBy(kvp => Languages.IsEssential(kvp.Key) ? 0 : 1)
+                .ThenBy(kvp => kvp.Value);
+            foreach (var lang in ordered)
             {
                 int idx = chkLanguages.Items.Add($"{lang.Value} ({lang.Key})");
-                chkLanguages.SetItemChecked(idx, true);
+                chkLanguages.SetItemChecked(idx, Languages.IsEssential(lang.Key));
             }
-            Log($"Loaded {chkLanguages.Items.Count} languages");
+            Log($"Loaded {chkLanguages.Items.Count} languages ({Languages.Essential.Length} selected by default)");
         }
 
-        private string DetectPluginLanguageDomain(string pluginPath)
+        /// <summary>Button "Default (15)" next to Select All / Unselect All.</summary>
+        private void AddEssentialsButton()
+        {
+            var btn = new Button
+            {
+                Name = "btnEssentials",
+                Text = $"Default ({Languages.Essential.Length})",
+                Location = new Point(232, 245),
+                Size = new Size(100, 25),
+                TabIndex = 7
+            };
+            btn.Click += BtnEssentials_Click;
+            panelEnigma2Mode.Controls.Add(btn);
+        }
+
+        private void BtnEssentials_Click(object? sender, EventArgs e)
+        {
+            for (int i = 0; i < chkLanguages.Items.Count; i++)
+            {
+                string text = chkLanguages.Items[i].ToString() ?? "";
+                int start = text.LastIndexOf('(');
+                int end = text.LastIndexOf(')');
+                string code = (start >= 0 && end > start) ? text.Substring(start + 1, end - start - 1) : "";
+                chkLanguages.SetItemChecked(i, Languages.IsEssential(code));
+            }
+            chkLanguages.TopIndex = 0;
+        }
+
+        private string? DetectPluginLanguageDomain(string pluginPath)
         {
             try
             {
@@ -222,7 +232,7 @@ namespace TranslationProject
             if (chkLanguages == null) return result;
             foreach (var item in chkLanguages.CheckedItems)
             {
-                string text = item.ToString();
+                string text = item.ToString() ?? "";
                 int start = text.LastIndexOf('(');
                 int end = text.LastIndexOf(')');
                 if (start > 0 && end > start)
@@ -307,7 +317,7 @@ namespace TranslationProject
             lblTimer.Text = $"{elapsed:mm\\:ss}";
         }
 
-        private void StartOperation(int totalItems, string operationName, ProgressBar progressBar = null)
+        private void StartOperation(int totalItems, string operationName, ProgressBar? progressBar = null)
         {
             _totalItems = totalItems;
             _processedItems = 0;
@@ -586,7 +596,7 @@ namespace TranslationProject
         /// Example: PluginLanguagePath = 'Extensions/vavoo/locale'
         /// Returns the path or null if not found.
         /// </summary>
-        private string DetectPluginLocalePath(string pluginPath)
+        private string? DetectPluginLocalePath(string pluginPath)
         {
             try
             {
@@ -645,7 +655,7 @@ namespace TranslationProject
                     _isTranslated = false;
 
                     // Auto-detect PluginLanguageDomain
-                    string detectedName = DetectPluginLanguageDomain(selectedPath);
+                    string? detectedName = DetectPluginLanguageDomain(selectedPath);
                     if (!string.IsNullOrEmpty(detectedName))
                     {
                         txtPluginName.Text = detectedName;
@@ -729,7 +739,7 @@ namespace TranslationProject
             {
                 Log($"Translating to: {string.Join(", ", selectedLangs)}");
                 string cachePath = Path.Combine(pluginPath, "locale", "translation_cache.json");
-                Directory.CreateDirectory(Path.GetDirectoryName(cachePath)); // assicura che locale esista
+                Directory.CreateDirectory(Path.GetDirectoryName(cachePath) ?? pluginPath); // assicura che locale esista
                 _enigma2Manager = new Enigma2TranslationManager(Log, cachePath, _pauseEvent);
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
@@ -921,7 +931,7 @@ namespace TranslationProject
                 Log($"Full Update: {pluginName}");
                 Log($"Languages: {string.Join(", ", selectedLangs)}");
                 string cachePath = Path.Combine(pluginPath, "locale", "translation_cache.json");
-                Directory.CreateDirectory(Path.GetDirectoryName(cachePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(cachePath) ?? pluginPath);
                 _enigma2Manager = new Enigma2TranslationManager(Log, cachePath, _pauseEvent);
                 _enigma2Manager.SetCacheEnabled(_useCache);
 
@@ -1004,7 +1014,7 @@ namespace TranslationProject
         /// </summary>
         private void CheckAndLoadCache()
         {
-            string cacheFolder = null;
+            string? cacheFolder = null;
             string context = "";
             bool isCSharpMode = cmbMode.SelectedIndex == 0;
 
@@ -1022,11 +1032,11 @@ namespace TranslationProject
                 else if (!string.IsNullOrEmpty(txtProjectPath.Text) && Directory.Exists(txtProjectPath.Text))
                 {
                     string basePath = txtProjectPath.Text.Trim();
-                    string foundCache = FindCacheRecursive(basePath);
+                    string? foundCache = FindCacheRecursive(basePath);
 
                     if (!string.IsNullOrEmpty(foundCache))
                     {
-                        string folder = Path.GetDirectoryName(foundCache);
+                        string folder = Path.GetDirectoryName(foundCache) ?? basePath;
                         CheckSingleCacheFile(folder, $"Project languages folder (found in: {Path.GetFileName(Path.GetDirectoryName(foundCache))})");
                     }
                     else
@@ -1065,7 +1075,7 @@ namespace TranslationProject
         /// Recursively searches for translation_cache.json in subfolders up to 2 levels deep.
         /// Returns the full path to the cache file if found, otherwise null.
         /// </summary>
-        private string FindCacheRecursive(string basePath)
+        private string? FindCacheRecursive(string basePath)
         {
             if (string.IsNullOrEmpty(basePath) || !Directory.Exists(basePath))
                 return null;
@@ -1278,7 +1288,7 @@ namespace TranslationProject
 
         private void BtnDeleteCacheGlobal_Click(object sender, EventArgs e)
         {
-            string cacheFile = GetCurrentCacheFile();
+            string? cacheFile = GetCurrentCacheFile();
             if (string.IsNullOrEmpty(cacheFile))
             {
                 Log("Please select a project or plugin folder first.");
@@ -1313,7 +1323,7 @@ namespace TranslationProject
 
         private void BtnImportCacheGlobal_Click(object sender, EventArgs e)
         {
-            string cacheFile = GetCurrentCacheFile();
+            string? cacheFile = GetCurrentCacheFile();
             if (string.IsNullOrEmpty(cacheFile))
             {
                 Log("Please select a project or plugin folder first.");
@@ -1378,13 +1388,13 @@ namespace TranslationProject
             }
         }
 
-        private string GetCurrentCacheFile()
+        private string? GetCurrentCacheFile()
         {
             bool isCSharpMode = cmbMode.SelectedIndex == 0;
 
             if (isCSharpMode)
             {
-                string folder = GetProjectCacheFolder();
+                string? folder = GetProjectCacheFolder();
                 if (string.IsNullOrEmpty(folder)) return null;
                 return Path.Combine(folder, "translation_cache.json");
             }
@@ -1392,7 +1402,8 @@ namespace TranslationProject
             {
                 if (string.IsNullOrWhiteSpace(txtPluginPath.Text)) return null;
                 if (!Directory.Exists(txtPluginPath.Text)) return null;
-                return Path.Combine(txtPluginPath.Text.Trim(), "translation_cache.json");
+                // same file used by Translate / Full Update / CheckAndLoadCache
+                return Path.Combine(txtPluginPath.Text.Trim(), "locale", "translation_cache.json");
             }
         }
 
@@ -1400,7 +1411,7 @@ namespace TranslationProject
         // EVENTS - C# CACHE
         // ================================================================
 
-        private string GetProjectCacheFolder()
+        private string? GetProjectCacheFolder()
         {
             if (string.IsNullOrWhiteSpace(txtProjectPath.Text))
                 return null;
@@ -1463,6 +1474,9 @@ namespace TranslationProject
         /// </summary>
         private async Task RunProjectTranslationAsync(CancellationToken token)
         {
+            if (_projectFolder == null || _outputFolder == null)
+                throw new InvalidOperationException("Project folder not selected.");
+
             Log("Extracting GetTranslation keys...");
             var keys = ExtractKeys(_projectFolder);
             Log($"Found {keys.Count} keys");
@@ -1518,7 +1532,8 @@ namespace TranslationProject
         /// </summary>
         private async Task ProcessLanguageAsync(string code, string fileName, HashSet<string> keys, CancellationToken token)
         {
-            string filePath = Path.Combine(_outputFolder, $"{fileName}.lng");
+            string outputFolder = _outputFolder ?? throw new InvalidOperationException("Output folder not set.");
+            string filePath = Path.Combine(outputFolder, $"{fileName}.lng");
             var translations = LoadExisting(filePath);
             bool changed = false;
             int count = 0;
@@ -1580,12 +1595,21 @@ namespace TranslationProject
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
-                // Use last ':' as separator
-                int lastColon = line.LastIndexOf(':');
-                if (lastColon > 0)
+                // Files are written as "Key::Value" (SEPARATOR). Splitting on the
+                // last ':' left a trailing ':' on the key ("Key:"), so every key
+                // looked new and was translated again and the old one removed.
+                int sep = line.IndexOf(SEPARATOR, StringComparison.Ordinal);
+                int sepLen = SEPARATOR.Length;
+                if (sep < 0)
                 {
-                    string key = line.Substring(0, lastColon).Trim();
-                    string value = line.Substring(lastColon + 1).Trim();
+                    // old "Key: Value" files
+                    sep = line.IndexOf(": ", StringComparison.Ordinal);
+                    sepLen = 2;
+                }
+                if (sep > 0)
+                {
+                    string key = line.Substring(0, sep).Trim();
+                    string value = line.Substring(sep + sepLen).Trim();
                     dict[key] = value;
                 }
             }
@@ -1647,6 +1671,11 @@ namespace TranslationProject
         {
             try
             {
+                if (string.IsNullOrEmpty(_cacheFile))
+                {
+                    Log("Cache not saved: no cache file selected yet.");
+                    return;
+                }
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(_cache, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(_cacheFile, json, new UTF8Encoding(false));
                 Log($"Cache saved: {_cache.Count} entries");
@@ -1657,104 +1686,6 @@ namespace TranslationProject
         // ================================================================
         // TRANSLATION HELPERS
         // ================================================================
-        private async Task<string> TranslateTextAsync(string text, string targetLang, CancellationToken token)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return text;
-
-            // 1. Protect Python placeholders: %(name)s, %(name)d, ...
-            var pythonPlaceholders = new Dictionary<string, string>();
-            int idx = 0;
-            string textWithPythonPlaceholders = text;
-            var pythonRegex = new Regex(@"%\([a-zA-Z_][a-zA-Z0-9_]*\)[diouxXeEfFgGcrs]");
-            foreach (Match match in pythonRegex.Matches(text))
-            {
-                string placeholder = match.Value;
-                string replacement = $"__PYPH_{idx}__";
-                textWithPythonPlaceholders = textWithPythonPlaceholders.Replace(placeholder, replacement);
-                pythonPlaceholders[replacement] = placeholder;
-                idx++;
-            }
-
-            // 2. Protect C# placeholders: {0}, {name}, ...
-            var csharpPlaceholders = new Dictionary<string, string>();
-            idx = 0;
-            string textWithCSharpPlaceholders = textWithPythonPlaceholders;
-            var csharpRegex = new Regex(@"\{[^{}]+\}");
-            foreach (Match match in csharpRegex.Matches(textWithPythonPlaceholders))
-            {
-                string placeholder = match.Value;
-                string replacement = $"__CSH_{idx}__";
-                textWithCSharpPlaceholders = textWithCSharpPlaceholders.Replace(placeholder, replacement);
-                csharpPlaceholders[replacement] = placeholder;
-                idx++;
-            }
-
-            // 3. Cache
-            string cacheKey = ComputeMd5($"{targetLang}:{textWithCSharpPlaceholders}");
-            if (_cache.TryGetValue(cacheKey, out string cached) && !string.IsNullOrEmpty(cached))
-            {
-                string restored = cached;
-                foreach (var kvp in csharpPlaceholders)
-                    restored = restored.Replace(kvp.Key, kvp.Value);
-                foreach (var kvp in pythonPlaceholders)
-                    restored = restored.Replace(kvp.Key, kvp.Value);
-                return restored;
-            }
-
-            // 4. Translate
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
-
-            try
-            {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                var response = await _httpClient.GetAsync(url, linked.Token);
-                string resp = await response.Content.ReadAsStringAsync(linked.Token);
-                var json = JArray.Parse(resp);
-
-                string translated = "";
-                if (json[0] is JArray arr)
-                {
-                    foreach (var item in arr)
-                        if (item[0] != null)
-                            translated += item[0].ToString();
-                }
-
-                if (!string.IsNullOrEmpty(translated))
-                {
-                    translated = CleanWhitespace(translated);
-                    // Restore placeholders
-                    foreach (var kvp in csharpPlaceholders)
-                        translated = translated.Replace(kvp.Key, kvp.Value);
-                    foreach (var kvp in pythonPlaceholders)
-                        translated = translated.Replace(kvp.Key, kvp.Value);
-
-                    _cache[cacheKey] = translated;
-                    SaveCache();
-                    return translated;
-                }
-            }
-            catch { }
-
-            return text;
-        }
-
-        private bool IsArabic(string text)
-        {
-            int arabic = 0, letters = 0;
-            foreach (char c in text)
-                if (char.IsLetter(c))
-                {
-                    letters++;
-                    if ((c >= 0x0600 && c <= 0x06FF) || (c >= 0x0750 && c <= 0x077F) ||
-                        (c >= 0x08A0 && c <= 0x08FF) || (c >= 0xFB50 && c <= 0xFDFF) ||
-                        (c >= 0xFE70 && c <= 0xFEFF))
-                        arabic++;
-                }
-            return letters > 0 && (double)arabic / letters >= 0.6;
-        }
-
         private string CleanWhitespace(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;
@@ -1815,7 +1746,7 @@ namespace TranslationProject
 
             // 3. Cache check
             string cacheKey = ComputeMd5($"{targetLang}:{textWithCSharpPlaceholders}");
-            if (_useCache && _cache.TryGetValue(cacheKey, out string cached) && !string.IsNullOrEmpty(cached))
+            if (_useCache && _cache.TryGetValue(cacheKey, out string? cached) && !string.IsNullOrEmpty(cached))
             {
                 string restored = cached;
                 foreach (var kvp in csharpPlaceholders)
@@ -1826,7 +1757,7 @@ namespace TranslationProject
             }
 
             // 4. Translate with retries
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
+            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={Languages.GoogleCode(targetLang)}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
 
             int maxRetries = 5;
             int baseDelay = 2000;
@@ -1873,8 +1804,11 @@ namespace TranslationProject
                     if (json[0] is JArray arr)
                     {
                         foreach (var item in arr)
-                            if (item[0] != null)
-                                translated += item[0].ToString();
+                        {
+                            var part = item[0];
+                            if (part != null)
+                                translated += part.ToString();
+                        }
                     }
 
                     if (!string.IsNullOrEmpty(translated))

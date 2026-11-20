@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 
 namespace TranslationProject
@@ -200,7 +200,12 @@ namespace TranslationProject
                 };
 
                 process.Start();
+                // read the redirected streams BEFORE waiting: with many errors the
+                // pipe buffer fills up and WaitForExit() would hang forever
+                var stdoutTask = process.StandardOutput.ReadToEndAsync();
+                string stderr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
+                stdoutTask.Wait();
 
                 if (process.ExitCode == 0)
                 {
@@ -209,7 +214,7 @@ namespace TranslationProject
                 }
                 else
                 {
-                    log($"  msgfmt error: {process.StandardError.ReadToEnd()}");
+                    log($"  msgfmt error: {stderr}");
                     return false;
                 }
             }

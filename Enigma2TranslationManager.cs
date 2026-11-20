@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -14,11 +14,11 @@ namespace TranslationProject
         private readonly string _cacheFile;
         private readonly Action<string> _log;
         private bool _useCache = true;
-        private readonly ManualResetEventSlim _pauseEvent;
+        private readonly ManualResetEventSlim? _pauseEvent;
         private int _cacheHits = 0;
         private int _cacheMisses = 0;
 
-        public Enigma2TranslationManager(Action<string> logCallback, string cachePath, ManualResetEventSlim pauseEvent = null)
+        public Enigma2TranslationManager(Action<string> logCallback, string cachePath, ManualResetEventSlim? pauseEvent = null)
         {
             _log = logCallback;
             _cacheFile = cachePath;
@@ -33,26 +33,56 @@ namespace TranslationProject
             _log?.Invoke($"Cache: {(enabled ? "ENABLED" : "DISABLED")}");
         }
 
+        // One Python string literal: "..." or '...' (optional u prefix), escapes allowed
+        private const string PyLiteral = @"[uU]?(?:""(?:[^""\\\n]|\\.)*""|'(?:[^'\\\n]|\\.)*')";
+
+        private static readonly Regex PyCallRegex = new Regex(
+            @"(?<![\w.])(?:_|gettext|pgettext)\s*\(\s*" +
+            @"(?:" + PyLiteral + @"\s*,\s*(?=" + PyLiteral + @"\s*\)))?" +   // pgettext("ctx", "text")
+            @"((?:" + PyLiteral + @"\s*)+)\)",                                // "a" "b" (implicit concatenation)
+            RegexOptions.Compiled);
+
+        private static readonly Regex PyPieceRegex = new Regex(
+            @"[uU]?(?:""((?:[^""\\\n]|\\.)*)""|'((?:[^'\\\n]|\\.)*)')",
+            RegexOptions.Compiled);
+
+        /// <summary>
+        /// Joins the literals of a call into one msgid, in .po (escaped) form.
+        /// Single-quoted strings may contain a bare " which must become \".
+        /// </summary>
+        private static string JoinPyLiterals(string literals)
+        {
+            var sb = new StringBuilder();
+            foreach (Match p in PyPieceRegex.Matches(literals))
+            {
+                if (p.Groups[1].Success)
+                    sb.Append(p.Groups[1].Value.Replace("\\'", "'"));
+                else
+                {
+                    string v = p.Groups[2].Value.Replace("\\'", "'");
+                    sb.Append(Regex.Replace(v, @"(?<!\\)""", "\\\""));
+                }
+            }
+            return sb.ToString();
+        }
+
         public List<string> ExtractPythonStrings(string pluginPath)
         {
             var strings = new HashSet<string>();
-            var regex = new Regex(
-                @"(?:_|gettext|pgettext)\s*\(\s*(?:""[^""]*""\s*,\s*)?[""']([^""']+)[""']\s*\)",
-                RegexOptions.Compiled | RegexOptions.Multiline
-            );
 
             foreach (var file in Directory.GetFiles(pluginPath, "*.py", SearchOption.AllDirectories))
             {
                 string name = Path.GetFileName(file);
-                if (name.StartsWith("test_") || name == "update_translation.py" || name == "translate_utils.py")
+                if (name.StartsWith("test_") || name == "update_translation.py" ||
+                    name == "update_translations.py" || name == "translate_utils.py")
                     continue;
 
                 try
                 {
                     string content = File.ReadAllText(file, Encoding.UTF8);
-                    foreach (Match m in regex.Matches(content))
+                    foreach (Match m in PyCallRegex.Matches(content))
                     {
-                        string text = m.Groups[1].Value.Trim();
+                        string text = JoinPyLiterals(m.Groups[1].Value).Trim();
                         if (!string.IsNullOrEmpty(text) && !text.StartsWith("#") && !text.StartsWith("/*"))
                             strings.Add(text);
                     }
@@ -85,7 +115,7 @@ namespace TranslationProject
                     if (nodes == null) continue;
                     foreach (XmlNode node in nodes)
                     {
-                        string value = node.Attributes?[attr]?.Value?.Trim();
+                        string? value = node.Attributes?[attr]?.Value?.Trim();
                         if (!string.IsNullOrEmpty(value) && !value.StartsWith("#") && !value.StartsWith("0x"))
                             strings.Add(value);
                     }
@@ -97,9 +127,57 @@ namespace TranslationProject
             return strings.ToList();
         }
 
+        private static string Unquote(string s)
+        {
+            s = s.Trim();
+            return (s.Length >= 2 && s[0] == '"' && s[s.Length - 1] == '"') ? s.Substring(1, s.Length - 2) : s;
+        }
+
+        /// <summary>
+        /// Reads a .po/.pot file: (msgid, msgstr) pairs in raw (escaped) form.
+        /// Handles strings split over several lines (msgmerge, Poedit, xgettext),
+        /// skips the header and obsolete "#~" entries; for plurals takes msgstr[0].
+        /// </summary>
+        public static List<KeyValuePair<string, string>> ReadPoEntries(string path)
+        {
+            var list = new List<KeyValuePair<string, string>>();
+            if (!File.Exists(path)) return list;
+
+            string? id = null, str = null, cur = null;
+            void Flush()
+            {
+                if (!string.IsNullOrEmpty(id))
+                    list.Add(new KeyValuePair<string, string>(id, str ?? ""));
+                id = null; str = null; cur = null;
+            }
+
+            foreach (var raw in File.ReadAllLines(path, Encoding.UTF8))
+            {
+                string line = raw.Trim();
+                if (line.StartsWith("#~")) continue;
+                if (line.StartsWith("msgctxt")) { Flush(); continue; }
+                if (line.StartsWith("msgid_plural")) { cur = null; continue; }
+                if (line.StartsWith("msgid "))
+                {
+                    if (cur != null || id != null) Flush();
+                    id = Unquote(line.Substring(6)); cur = "id";
+                }
+                else if (line.StartsWith("msgstr[0] ")) { str = Unquote(line.Substring(10)); cur = "str"; }
+                else if (line.StartsWith("msgstr[")) { cur = null; }
+                else if (line.StartsWith("msgstr ")) { str = Unquote(line.Substring(7)); cur = "str"; }
+                else if (line.StartsWith('"'))
+                {
+                    if (cur == "id") id += Unquote(line);
+                    else if (cur == "str") str += Unquote(line);
+                }
+            }
+            Flush();
+            return list;
+        }
+
         public void UpdatePot(string potFile, List<string> strings, string pluginName)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(potFile));
+            Directory.CreateDirectory(Path.GetDirectoryName(potFile) ?? ".");
 
             var lines = new List<string>();
             lines.Add($"# {pluginName} translations");
@@ -146,37 +224,16 @@ namespace TranslationProject
             // ============================================================
             // 1. READ ALL MSGIDS FROM POT FILE
             // ============================================================
-            var potLines = File.ReadAllLines(potFile, Encoding.UTF8);
-            var msgids = new List<string>();
-            foreach (var line in potLines)
-            {
-                if (line.StartsWith("msgid \""))
-                {
-                    string msgid = line.Substring(7, line.Length - 8);
-                    if (!string.IsNullOrEmpty(msgid))
-                        msgids.Add(msgid);
-                }
-            }
+            // multi-line aware: a translation split over several lines (Poedit,
+            // msgmerge) used to be read as empty and was overwritten by Google
+            var msgids = ReadPoEntries(potFile).Select(e => e.Key).Distinct().ToList();
 
             // ============================================================
             // 2. LOAD EXISTING TRANSLATIONS FROM PO FILE
             // ============================================================
             var existing = new Dictionary<string, string>();
-            if (File.Exists(poFile))
-            {
-                var poLines = File.ReadAllLines(poFile, Encoding.UTF8);
-                string currentId = null;
-                foreach (var line in poLines)
-                {
-                    if (line.StartsWith("msgid \""))
-                        currentId = line.Substring(7, line.Length - 8);
-                    else if (line.StartsWith("msgstr \"") && currentId != null)
-                    {
-                        existing[currentId] = line.Substring(8, line.Length - 9);
-                        currentId = null;
-                    }
-                }
-            }
+            foreach (var e in ReadPoEntries(poFile))
+                existing[e.Key] = e.Value;
 
             // ============================================================
             // 3. BUILD NEW PO FILE CONTENT
@@ -224,7 +281,7 @@ namespace TranslationProject
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
 
                 string translationToWrite;
-                if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
+                if (existing.TryGetValue(msgid, out string? existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
                 {
                     translationToWrite = existingTranslation;
                 }
@@ -279,165 +336,9 @@ namespace TranslationProject
 
             _log?.Invoke($"  ⏱️ {targetLang}: completed in {stopwatch.ElapsedMilliseconds}ms, {translated} new translations");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(poFile));
+            Directory.CreateDirectory(Path.GetDirectoryName(poFile) ?? ".");
             File.WriteAllLines(poFile, po, new UTF8Encoding(false));
         }
-
-        /*
-        public async Task UpdatePoFileAsync(string poFile, string potFile, string targetLang, CancellationToken token)
-        {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            _log?.Invoke($"  ⏱️ Starting translation for: {targetLang}");
-
-            // ============================================================
-            // 1. READ ALL MSGIDS FROM POT FILE
-            // ============================================================
-            var potLines = File.ReadAllLines(potFile, Encoding.UTF8);
-            var msgids = new List<string>();
-            foreach (var line in potLines)
-            {
-                if (line.StartsWith("msgid \""))
-                {
-                    string msgid = line.Substring(7, line.Length - 8);
-                    if (!string.IsNullOrEmpty(msgid))
-                        msgids.Add(msgid);
-                }
-            }
-
-            // ============================================================
-            // 2. LOAD EXISTING TRANSLATIONS FROM PO FILE (if it exists)
-            // ============================================================
-            var existing = new Dictionary<string, string>();
-            if (File.Exists(poFile))
-            {
-                var poLines = File.ReadAllLines(poFile, Encoding.UTF8);
-                string currentId = null;
-                foreach (var line in poLines)
-                {
-                    if (line.StartsWith("msgid \""))
-                        currentId = line.Substring(7, line.Length - 8);
-                    else if (line.StartsWith("msgstr \"") && currentId != null)
-                    {
-                        existing[currentId] = line.Substring(8, line.Length - 9);
-                        currentId = null;
-                    }
-                }
-            }
-
-            // ============================================================
-            // 3. BUILD NEW PO FILE CONTENT
-            // ============================================================
-            var po = new List<string>();
-            po.Add($"# {targetLang} translations");
-            po.Add("# Copyright (C) 2026 Lululla Team");
-            po.Add("#");
-            po.Add("msgid \"\"");
-            po.Add("msgstr \"\"");
-            po.Add($"\"Project-Id-Version: PACKAGE VERSION\\n\"");
-            po.Add($"\"POT-Creation-Date: \\n\"");
-            po.Add($"\"PO-Revision-Date: \\n\"");
-            po.Add($"\"Last-Translator: \\n\"");
-            po.Add($"\"Language-Team: {targetLang} <ekekaz@gmail.com>\\n\"");
-            po.Add($"\"Language: {targetLang}\\n\"");
-            po.Add("\"MIME-Version: 1.0\\n\"");
-            po.Add("\"Content-Type: text/plain; charset=UTF-8\\n\"");
-            po.Add("\"Content-Transfer-Encoding: 8bit\\n\"");
-            po.Add("");
-
-            // ============================================================
-            // 4. PROCESS EACH STRING
-            // ============================================================
-            int translated = 0;
-            int totalStrings = msgids.Count;
-            int processed = 0;
-
-            foreach (var msgid in msgids)
-            {
-                // ------------------------------------------------------------
-                // PAUSE CHECK (async) - waits if paused, does not block UI
-                // ------------------------------------------------------------
-                if (_pauseEvent != null)
-                {
-                    await Task.Run(() => _pauseEvent.Wait(token), token);
-                }
-
-                // ------------------------------------------------------------
-                // STOP CHECK - throws if cancellation requested
-                // ------------------------------------------------------------
-                token.ThrowIfCancellationRequested();
-
-                processed++;
-                po.Add($"msgid \"{EscapeForPo(msgid)}\"");
-
-                string translationToWrite;
-
-                // Check if translation already exists in the .po file
-                if (existing.TryGetValue(msgid, out string existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
-                {
-                    // Existing translation - check if it needs escaping
-                    // If it contains " without \", it's not properly escaped
-                    if (existingTranslation.Contains("\"") && !existingTranslation.Contains("\\\""))
-                    {
-                        translationToWrite = EscapeForPo(existingTranslation);
-                    }
-                    else
-                    {
-                        translationToWrite = existingTranslation;
-                    }
-                }
-                else
-                {
-                    // New translation - TranslateAsync already escapes quotes and handles \n
-                    translationToWrite = await TranslateAsync(msgid, targetLang, token);
-                    translated++;
-                }
-
-                // ------------------------------------------------------------
-                // FIX: Ensure \n matches at start/end of string
-                // ------------------------------------------------------------
-                if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
-                    translationToWrite = "\\n" + translationToWrite;
-                if (msgid.EndsWith("\\n") && !translationToWrite.EndsWith("\\n"))
-                    translationToWrite = translationToWrite + "\\n";
-
-                // ------------------------------------------------------------
-                // ADD TO PO FILE
-                // IMPORTANT: DO NOT call EscapeForPo here again!
-                // translationToWrite is already properly escaped by TranslateAsync
-                // or by the check above for existing translations.
-                // ------------------------------------------------------------
-                po.Add($"msgstr \"{translationToWrite}\"");
-                po.Add("");
-
-                // ------------------------------------------------------------
-                // PAUSE CHECK AGAIN (async) - immediate response
-                // ------------------------------------------------------------
-                if (_pauseEvent != null)
-                {
-                    await Task.Run(() => _pauseEvent.Wait(token), token);
-                }
-
-                // Log progress every 50 strings
-                if (processed % 50 == 0)
-                {
-                    _log?.Invoke($"  📊 [{targetLang.ToUpper()}]: {processed}/{totalStrings} strings processed");
-                }
-            }
-
-            // ============================================================
-            // 5. COMPLETE AND SAVE
-            // ============================================================
-            stopwatch.Stop();
-
-            if (translated > 0)
-                _log?.Invoke($"  {targetLang}: translated {translated} new strings");
-
-            _log?.Invoke($"  ⏱️ {targetLang}: completed in {stopwatch.ElapsedMilliseconds}ms, {translated} new translations");
-
-            // Save .po file
-            Directory.CreateDirectory(Path.GetDirectoryName(poFile));
-            File.WriteAllLines(poFile, po, new UTF8Encoding(false));
-        } */
 
         /// <summary>
         /// Escapes special characters for gettext .po file format.
@@ -448,13 +349,31 @@ namespace TranslationProject
         {
             if (string.IsNullOrEmpty(input)) return "";
 
-            // Escape double quotes
-            string result = input.Replace("\"", "\\\"");
-
-            // Remove invalid backslash sequences (keep only \n, \t, \r, \", \\)
-            result = Regex.Replace(result, @"\\(?![ntr\""\\])", "");
-
-            return result;
+            // Strings here are already in .po form (\n, \", \\). Escaping every "
+            // again turned \" into \\" and broke the msgid at every run.
+            // Walk the string: keep valid escape pairs, escape bare quotes,
+            // drop backslashes that start an invalid sequence.
+            var sb = new StringBuilder(input.Length + 8);
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                if (c == '\\')
+                {
+                    if (i + 1 < input.Length && "ntr\"\\".IndexOf(input[i + 1]) >= 0)
+                    {
+                        sb.Append(c).Append(input[i + 1]);
+                        i++;
+                    }
+                    // else: invalid escape -> drop the backslash
+                }
+                else if (c == '"')
+                    sb.Append("\\\"");
+                else if (c == '\n')
+                    sb.Append("\\n");
+                else
+                    sb.Append(c);
+            }
+            return sb.ToString();
         }
 
         /// <summary>
@@ -462,7 +381,7 @@ namespace TranslationProject
         /// Extracts strings, updates POT, translates all languages, and compiles MO files.
         /// Supports Pause (async) and Stop (CancellationToken).
         /// </summary>
-        public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string customPluginName = null)
+        public async Task RunFullUpdateAsync(string pluginPath, List<string> languages, CancellationToken token, string? customPluginName = null)
         {
             string pluginName = string.IsNullOrEmpty(customPluginName)
                 ? Path.GetFileName(pluginPath)
@@ -504,8 +423,8 @@ namespace TranslationProject
                 await UpdatePoFileAsync(poFile, potFile, lang, token);
 
                 string moFile = Path.Combine(pluginPath, "locale", lang, "LC_MESSAGES", $"{pluginName}.mo");
-                bool success = GettextTools.RunMsgFmt(poFile, moFile, _log);
-                if (!success) _log($"  ERROR compiling {lang}");
+                bool success = GettextTools.RunMsgFmt(poFile, moFile, msg => _log?.Invoke(msg));
+                if (!success) _log?.Invoke($"  ERROR compiling {lang}");
             }
 
             SaveCache();
@@ -572,7 +491,7 @@ namespace TranslationProject
             if (_useCache)
             {
                 string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
-                if (_cache.TryGetValue(cacheKey, out string cached))
+                if (_cache.TryGetValue(cacheKey, out string? cached))
                 {
                     if (!string.IsNullOrEmpty(cached))
                     {
@@ -593,7 +512,7 @@ namespace TranslationProject
             // ------------------------------------------------------------
             // 5. Translate with retries
             // ------------------------------------------------------------
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={targetLang}&dt=t&q={Uri.EscapeDataString(protectedText)}";
+            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={Languages.GoogleCode(targetLang)}&dt=t&q={Uri.EscapeDataString(protectedText)}";
 
             int maxRetries = 3;
             int baseDelay = 2000;
@@ -640,8 +559,11 @@ namespace TranslationProject
                     if (json[0] is JArray arr)
                     {
                         foreach (var item in arr)
-                            if (item[0] != null)
-                                translated += item[0].ToString();
+                        {
+                            var part = item[0];
+                            if (part != null)
+                                translated += part.ToString();
+                        }
                     }
 
                     if (!string.IsNullOrEmpty(translated))
@@ -707,7 +629,7 @@ namespace TranslationProject
             result = Regex.Replace(result, @"_*ESC_+\d+_*", match =>
             {
                 string key = match.Value;
-                if (escapeMap.TryGetValue(key, out string replacement))
+                if (escapeMap.TryGetValue(key, out string? replacement))
                     return replacement;
 
                 // If the placeholder is for \n, return newline

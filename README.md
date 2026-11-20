@@ -1,4 +1,4 @@
-# Translation Tool v2.6 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.8 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.6-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.8-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -47,7 +47,7 @@
 
 ### 🔹 General Features
 - **Dual Mode:** Switch between C# and Enigma2 modes.
-- **Language Selection:** Choose from over 90 languages.
+- **Language Selection:** Choose from over 90 languages. By default only **15 essential languages** are selected (Italian, German, French, Spanish, Portuguese, Russian, Ukrainian, Polish, Dutch, Greek, Turkish, Arabic, Persian, Czech, Chinese) – **Default (15)** restores them, **Select All** selects everything.
 - **Select / Unselect All:** Quickly manage language selection.
 - **Smart Cache:** Saves translations locally to avoid repeated API calls.
 - **Import Cache:** Import translations from Python scripts or any `translation_cache.json`.
@@ -82,7 +82,7 @@
 ## 📥 Requirements
 
 - **Windows** (7, 8, 10, 11)
-- **.NET 10.0 Runtime** (or newer)
+- **Nothing else to install:** the release is a single self-contained `.exe` (the .NET runtime is included)
 - **No Python required** – everything is self-contained in C#.
 
 ---
@@ -194,17 +194,40 @@ plugin/locale/
 
 ---
 
-## 📁 Project Structure
+## 📁 Download
 
+Get **`TranslationProject.exe`** from the [latest release](https://github.com/OwnerPlugins/TranslationProject/releases/latest): one single file, no installation, no .NET required.
+
+---
+
+## 🛠️ Build from source
+
+Requires the **.NET 10 SDK** (Windows).
+
+```powershell
+dotnet publish TranslationProject.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o .\publish
 ```
-TranslationProject/
-├── TranslationProject.exe          # Main executable
-└── TranslationProject.dll.config   # Enigma2 translation files
-```
+
+Output: `publish\TranslationProject.exe` (single file).
+
+Releases are built automatically by GitHub Actions: pushing a tag like `v2.8` builds the exe and publishes the release.
 
 ---
 
 ## 🔧 Changelog
+
+### Version 2.8 – 2026-11-20
+- **Changed:** Only **15 essential languages** selected by default (were ~100), listed at the top; new **Default (15)** button in both modes.
+- **Fixed:** Languages with a region code (`zh_CN`, `pt_BR`, `zh_TW`, `sr_Latn`…) were sent to Google with `_` and came back untranslated – now converted (`zh-CN`, `pt`, `zh-TW`, `sr`).
+- **Fixed:** Translations split over several lines (Poedit, msgmerge) were read as empty and **overwritten** – the `.po` reader now joins continuation lines, so manual fixes are kept.
+- **Fixed:** Strings with quotes were double-escaped (`\"` → `\\"`) at every run, breaking the msgid.
+- **Fixed:** Python strings with the other quote type (`_("Nothing found for '%s'")`), implicit concatenation (`_("a" "b")`) and `u"..."` were not extracted.
+- **Fixed:** C# `.lng` files were re-translated at every run (keys read with a trailing `:`) – now split on the `::` separator.
+- **Fixed:** Enigma2 **Import / Delete Cache** used `plugin/translation_cache.json` instead of `plugin/locale/translation_cache.json`.
+- **Fixed:** Possible hang of `msgfmt` with many errors.
+- **Fixed:** All 51 nullable compiler warnings (no behaviour change; a few extra null checks).
+- **Improved:** Single-file self-contained `.exe` (compressed, native libraries included); releases built by GitHub Actions.
+- **Removed:** Unused `TranslateTextAsync` / `IsArabic`.
 
 ### Version 2.6 – 2026-07-09
 - **Added:** Async Pause/Resume support – no more UI blocking.

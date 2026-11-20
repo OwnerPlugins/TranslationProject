@@ -1,4 +1,4 @@
-# Translation Tool v2.8 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.9 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.8-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.9-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -215,6 +215,11 @@ Releases are built automatically by GitHub Actions: pushing a tag like `v2.8` bu
 ---
 
 ## 🔧 Changelog
+
+### Version 2.9 – 2026-11-20
+- **Fixed:** Google "429 Too Many Requests": one request at a time with a pause between requests; when Google blocks, the program waits (30 s → 1 min → 2 min → 5 min) and retries the same string; if it keeps blocking, it stops for 15 minutes and leaves the remaining strings empty for the next run.
+- **Fixed:** strings Google refused were saved with the English text as translation (`.lng` / `.po`) and never retried. Now they are not written, and existing translations identical to the English text are translated again.
+- **Changed:** one shared Google client (`GoogleTranslate.cs`) for C# and Enigma2 modes, with a browser User-Agent.
 
 ### Version 2.8 – 2026-11-20
 - **Changed:** Only **15 essential languages** selected by default (were ~100), listed at the top; new **Default (15)** button in both modes.

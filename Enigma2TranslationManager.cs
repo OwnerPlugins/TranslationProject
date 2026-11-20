@@ -8,7 +8,6 @@ namespace TranslationProject
 {
     public class Enigma2TranslationManager
     {
-        private readonly HttpClient _httpClient = new HttpClient();
         private readonly Dictionary<string, string> _cache = new Dictionary<string, string>();
         private Dictionary<string, string> _escapeMap = new Dictionary<string, string>();
         private readonly string _cacheFile;
@@ -24,7 +23,6 @@ namespace TranslationProject
             _cacheFile = cachePath;
             _pauseEvent = pauseEvent;
             LoadCache();
-            _httpClient.Timeout = TimeSpan.FromSeconds(10);
         }
 
         public void SetCacheEnabled(bool enabled)
@@ -259,6 +257,7 @@ namespace TranslationProject
             // 4. PROCESS EACH STRING
             // ============================================================
             int translated = 0;
+            int skipped = 0;
             int totalStrings = msgids.Count;
             int processed = 0;
 
@@ -281,24 +280,38 @@ namespace TranslationProject
                 po.Add($"msgid \"{EscapeForPo(msgid)}\"");
 
                 string translationToWrite;
-                if (existing.TryGetValue(msgid, out string? existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
+                // An existing msgstr equal to the English msgid is usually a failed
+                // translation written by older versions: translate it again.
+                if (existing.TryGetValue(msgid, out string? existingTranslation) && !string.IsNullOrEmpty(existingTranslation)
+                    && !(existingTranslation == msgid && LooksTranslatable(msgid)))
                 {
                     translationToWrite = existingTranslation;
                 }
                 else
                 {
-                    translationToWrite = await TranslateAsync(msgid, targetLang, token);
-                    translated++;
+                    string? result = await TranslateAsync(msgid, targetLang, token);
+                    if (result != null)
+                    {
+                        translationToWrite = result;
+                        translated++;
+                    }
+                    else
+                    {
+                        // Empty msgstr: Enigma2 shows the English text and the
+                        // next run translates it.
+                        translationToWrite = "";
+                        skipped++;
+                    }
                 }
 
                 // ------------------------------------------------------------
                 // FORCE FIX: Ensure \n matching for ALL translations
                 // ------------------------------------------------------------
-                if (msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
+                if (translationToWrite.Length > 0 && msgid.StartsWith("\\n") && !translationToWrite.StartsWith("\\n"))
                 {
                     translationToWrite = "\\n" + translationToWrite;
                 }
-                if (msgid.EndsWith("\\n") && !translationToWrite.EndsWith("\\n"))
+                if (translationToWrite.Length > 0 && msgid.EndsWith("\\n") && !translationToWrite.EndsWith("\\n"))
                 {
                     translationToWrite = translationToWrite + "\\n";
                 }
@@ -325,6 +338,9 @@ namespace TranslationProject
                     _log?.Invoke($"  📊 [{targetLang.ToUpper()}]: {processed}/{totalStrings} strings processed");
                 }
             }
+
+            if (skipped > 0)
+                _log?.Invoke($"  ⚠️ [{targetLang.ToUpper()}]: {skipped} strings not translated (left empty, retried next run)");
 
             // ============================================================
             // 5. COMPLETE AND SAVE
@@ -431,7 +447,8 @@ namespace TranslationProject
             _log?.Invoke("=== Update completed ===");
         }
 
-        private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
+        /// <summary>Returns null when the text could not be translated.</summary>
+        private async Task<string?> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
@@ -512,104 +529,30 @@ namespace TranslationProject
             // ------------------------------------------------------------
             // 5. Translate with retries
             // ------------------------------------------------------------
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={Languages.GoogleCode(targetLang)}&dt=t&q={Uri.EscapeDataString(protectedText)}";
+            string? translated = await GoogleTranslate.TranslateAsync(
+                protectedText, Languages.GoogleCode(targetLang), _log, token);
+            if (string.IsNullOrEmpty(translated))
+                return null;
 
-            int maxRetries = 3;
-            int baseDelay = 2000;
-            Random random = new Random();
+            translated = CleanWhitespace(translated);
+            translated = RestoreEscapes(translated, escapeMap);
 
-            for (int attempt = 0; attempt < maxRetries; attempt++)
+            // Restore C# placeholders
+            foreach (var kvp in csharpPlaceholders)
+                translated = translated.Replace(kvp.Key, kvp.Value);
+
+            // Restore Python placeholders
+            foreach (var kvp in pythonPlaceholders)
+                translated = translated.Replace(kvp.Key, kvp.Value);
+
+            if (_useCache)
             {
-                try
-                {
-                    var requestStopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                    var response = await _httpClient.GetAsync(url, linked.Token);
-                    string resp = await response.Content.ReadAsStringAsync(linked.Token);
-
-                    requestStopwatch.Stop();
-
-                    // Log with [LANG] in UPPERCASE
-                    _log?.Invoke($"  📡 [{targetLang.ToUpper()}]: request {attempt + 1}/{maxRetries} took {requestStopwatch.ElapsedMilliseconds}ms, status: {response.StatusCode}");
-
-                    if (resp.TrimStart().StartsWith("<"))
-                    {
-                        if (attempt >= maxRetries - 1)
-                        {
-                            _log?.Invoke($"  ❌ [{targetLang.ToUpper()}]: HTML response, all retries exhausted. Returning original text.");
-                            return text;
-                        }
-
-                        int jitter = random.Next(0, 500);
-                        int delay = baseDelay * (attempt + 1) + jitter;
-                        _log?.Invoke($"  ⚠️ [{targetLang.ToUpper()}]: HTML response, retry {attempt + 1}/{maxRetries} (delay: {delay}ms)");
-
-                        string htmlPreview = resp.Length > 200 ? resp.Substring(0, 200) + "..." : resp;
-                        _log?.Invoke($"  📄 HTML preview: {htmlPreview}");
-
-                        await Task.Delay(delay, token);
-                        continue;
-                    }
-
-                    var json = JArray.Parse(resp);
-                    string translated = "";
-                    if (json[0] is JArray arr)
-                    {
-                        foreach (var item in arr)
-                        {
-                            var part = item[0];
-                            if (part != null)
-                                translated += part.ToString();
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(translated))
-                    {
-                        translated = CleanWhitespace(translated);
-                        translated = RestoreEscapes(translated, escapeMap);
-
-                        // Restore C# placeholders
-                        foreach (var kvp in csharpPlaceholders)
-                            translated = translated.Replace(kvp.Key, kvp.Value);
-
-                        // Restore Python placeholders
-                        foreach (var kvp in pythonPlaceholders)
-                            translated = translated.Replace(kvp.Key, kvp.Value);
-
-                        // Save to cache
-                        if (_useCache)
-                        {
-                            string cacheKey = ComputeMd5($"{targetLang}:{protectedText}");
-                            _cache[cacheKey] = translated;
-                            SaveCache();
-                        }
-
-                        // Log with [LANG] in UPPERCASE
-                        _log?.Invoke($"  ✅ [{targetLang.ToUpper()}]: translated successfully (attempt {attempt + 1})");
-                        return translated;
-                    }
-
-                    return text;
-                }
-                catch (Exception ex)
-                {
-                    if (attempt >= maxRetries - 1)
-                    {
-                        _log?.Invoke($"  ❌ [{targetLang.ToUpper()}]: all retries exhausted: {ex.Message}");
-                        return text;
-                    }
-
-                    int jitter = random.Next(0, 500);
-                    int delay = baseDelay * (attempt + 1) + jitter;
-                    _log?.Invoke($"  ⚠️ [{targetLang.ToUpper()}]: error (attempt {attempt + 1}/{maxRetries}): {ex.Message}. Retrying in {delay}ms");
-                    await Task.Delay(delay, token);
-                }
+                _cache[ComputeMd5($"{targetLang}:{protectedText}")] = translated;
+                SaveCache();
             }
 
-            return text;
+            _log?.Invoke($"  ✅ [{targetLang.ToUpper()}]: translated");
+            return translated;
         }
 
         private string RestoreEscapes(string input, Dictionary<string, string> escapeMap)
@@ -711,6 +654,10 @@ namespace TranslationProject
                 catch { }
             }
         }
+
+        /// <summary>True for text that normally changes when translated (has words).</summary>
+        internal static bool LooksTranslatable(string text) =>
+            Regex.IsMatch(text, @"[A-Za-z]{3,}");
 
         private void SaveCache()
         {

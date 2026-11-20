@@ -10,7 +10,6 @@ namespace TranslationProject
         // ================================================================
         // PRIVATE FIELDS
         // ================================================================
-        private readonly HttpClient _httpClient = new HttpClient();
         private Dictionary<string, string> _cache = new Dictionary<string, string>();
         private string? _cacheFile;
         private bool _suppressCacheCheck = false;
@@ -1537,6 +1536,7 @@ namespace TranslationProject
             var translations = LoadExisting(filePath);
             bool changed = false;
             int count = 0;
+            int skipped = 0;
 
             foreach (string key in keys)
             {
@@ -1550,9 +1550,18 @@ namespace TranslationProject
                 // ============================================================
                 token.ThrowIfCancellationRequested();
 
-                if (translations.ContainsKey(key)) continue;
+                // Keep existing translations, except the ones equal to the English
+                // key (failed translations written by older versions).
+                if (translations.TryGetValue(key, out string? old) && !string.IsNullOrEmpty(old)
+                    && !(old == key && Enigma2TranslationManager.LooksTranslatable(key)))
+                    continue;
 
-                string translated = await TranslateAsync(key, code, token);
+                string? translated = await TranslateAsync(key, code, token);
+                if (translated == null)
+                {
+                    skipped++;      // not written: retried on the next run
+                    continue;
+                }
                 translations[key] = translated;
                 changed = true;
                 count++;
@@ -1560,6 +1569,9 @@ namespace TranslationProject
                 if (count % 50 == 0)
                     Log($"  {count} new for {fileName}");
             }
+
+            if (skipped > 0)
+                Log($"  ⚠️ {fileName}: {skipped} strings not translated (Google limit), they will be retried next run");
 
             // Remove obsolete keys
             var orphans = translations.Keys.Except(keys).ToList();
@@ -1712,7 +1724,8 @@ namespace TranslationProject
         /// Preserves C# and Python placeholders.
         /// Retries up to 5 times with exponential backoff.
         /// </summary>
-        private async Task<string> TranslateAsync(string text, string targetLang, CancellationToken token)
+        /// <summary>Returns null when the text could not be translated.</summary>
+        private async Task<string?> TranslateAsync(string text, string targetLang, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
@@ -1756,98 +1769,26 @@ namespace TranslationProject
                 return restored;
             }
 
-            // 4. Translate with retries
-            string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={Languages.GoogleCode(targetLang)}&dt=t&q={Uri.EscapeDataString(textWithCSharpPlaceholders)}";
+            // 4. Translate (shared client: rate limit + pause when Google blocks)
+            string? translated = await GoogleTranslate.TranslateAsync(
+                textWithCSharpPlaceholders, Languages.GoogleCode(targetLang), Log, token);
+            if (string.IsNullOrEmpty(translated))
+                return null;
 
-            int maxRetries = 5;
-            int baseDelay = 2000;
-            Random random = new Random();
+            translated = CleanWhitespace(translated);
+            foreach (var kvp in csharpPlaceholders)
+                translated = translated.Replace(kvp.Key, kvp.Value);
+            foreach (var kvp in pythonPlaceholders)
+                translated = translated.Replace(kvp.Key, kvp.Value);
 
-            for (int attempt = 0; attempt < maxRetries; attempt++)
+            if (_useCache)
             {
-                try
-                {
-                    var requestStopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cts.Token);
-
-                    var response = await _httpClient.GetAsync(url, linked.Token);
-                    string resp = await response.Content.ReadAsStringAsync(linked.Token);
-
-                    requestStopwatch.Stop();
-
-                    // Log with [LANG] in UPPERCASE
-                    Log($"  📡 [{targetLang.ToUpper()}]: request {attempt + 1}/{maxRetries} took {requestStopwatch.ElapsedMilliseconds}ms, status: {response.StatusCode}");
-
-                    if (resp.TrimStart().StartsWith("<"))
-                    {
-                        if (attempt >= maxRetries - 1)
-                        {
-                            Log($"  ❌ [{targetLang.ToUpper()}]: HTML response, all retries exhausted. Returning original text.");
-                            return text;
-                        }
-
-                        int jitter = random.Next(0, 500);
-                        int delay = baseDelay * (attempt + 1) + jitter;
-                        Log($"  ⚠️ [{targetLang.ToUpper()}]: HTML response, retry {attempt + 1}/{maxRetries} (delay: {delay}ms)");
-
-                        string htmlPreview = resp.Length > 200 ? resp.Substring(0, 200) + "..." : resp;
-                        Log($"  📄 HTML preview: {htmlPreview}");
-
-                        await Task.Delay(delay, token);
-                        continue;
-                    }
-
-                    var json = JArray.Parse(resp);
-                    string translated = "";
-                    if (json[0] is JArray arr)
-                    {
-                        foreach (var item in arr)
-                        {
-                            var part = item[0];
-                            if (part != null)
-                                translated += part.ToString();
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(translated))
-                    {
-                        translated = CleanWhitespace(translated);
-
-                        foreach (var kvp in csharpPlaceholders)
-                            translated = translated.Replace(kvp.Key, kvp.Value);
-                        foreach (var kvp in pythonPlaceholders)
-                            translated = translated.Replace(kvp.Key, kvp.Value);
-
-                        if (_useCache)
-                        {
-                            _cache[cacheKey] = translated;
-                            SaveCache();
-                        }
-
-                        Log($"  ✅ [{targetLang.ToUpper()}]: translated successfully (attempt {attempt + 1})");
-                        return translated;
-                    }
-
-                    return text;
-                }
-                catch (Exception ex)
-                {
-                    if (attempt >= maxRetries - 1)
-                    {
-                        Log($"  ❌ [{targetLang.ToUpper()}]: all retries exhausted: {ex.Message}");
-                        return text;
-                    }
-
-                    int jitter = random.Next(0, 500);
-                    int delay = baseDelay * (attempt + 1) + jitter;
-                    Log($"  ⚠️ [{targetLang.ToUpper()}]: error (attempt {attempt + 1}/{maxRetries}): {ex.Message}. Retrying in {delay}ms");
-                    await Task.Delay(delay, token);
-                }
+                _cache[cacheKey] = translated;
+                SaveCache();
             }
 
-            return text;
+            Log($"  ✅ [{targetLang.ToUpper()}]: translated");
+            return translated;
         }
 
         private string ComputeMd5(string input)

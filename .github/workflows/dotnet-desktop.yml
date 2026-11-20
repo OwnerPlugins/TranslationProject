@@ -1,9 +1,13 @@
 name: Build and release
 
+# Every push to main builds the exe.
+# If <AssemblyVersion> in TranslationProject.csproj is new (no release vX.Y yet),
+# the GitHub Release vX.Y is created automatically with the exe attached.
+# To publish a new version: change AssemblyVersion, commit, push. Nothing else.
+
 on:
   push:
     branches: [ "main" ]
-    tags: [ "v*" ]
   workflow_dispatch:
 
 permissions:
@@ -22,28 +26,58 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
+    - name: Read version from csproj
+      id: version
+      shell: pwsh
+      run: |
+        [xml]$proj = Get-Content TranslationProject.csproj
+        $ver = ($proj.Project.PropertyGroup | Where-Object { $_.AssemblyVersion } | Select-Object -First 1).AssemblyVersion
+        if (-not $ver) { throw "AssemblyVersion not found in TranslationProject.csproj" }
+        "version=$ver" >> $env:GITHUB_OUTPUT
+        Write-Host "Version: $ver"
+
+    - name: Check if release already exists
+      id: check
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        $tag = "v${{ steps.version.outputs.version }}"
+        gh release view $tag --repo "${{ github.repository }}" *> $null
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "Release $tag already exists: build only"
+          "create=false" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "Release $tag not found: it will be created"
+          "create=true" >> $env:GITHUB_OUTPUT
+        }
+        exit 0
+
     - name: Publish single-file exe
       run: dotnet publish TranslationProject.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o ./publish_exe
 
     - name: Zip (exe + README + LICENSE)
+      shell: pwsh
       run: |
         Copy-Item README.md, LICENSE ./publish_exe/ -ErrorAction SilentlyContinue
         Compress-Archive -Path ./publish_exe/* -DestinationPath ./TranslationProject.zip -Force
 
-    # every push to main: build is downloadable from the Actions page (not committed to the repo)
+    # every build is also downloadable from the Actions page
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: TranslationProject-${{ github.run_number }}
+        name: TranslationProject-v${{ steps.version.outputs.version }}-build${{ github.run_number }}
         path: ./publish_exe/TranslationProject.exe
 
-    # tag v2.8, v2.9 ...: create the GitHub Release with the exe and the zip
     - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: steps.check.outputs.create == 'true'
       uses: softprops/action-gh-release@v2
       with:
-        name: Translation Tool ${{ github.ref_name }}
+        tag_name: v${{ steps.version.outputs.version }}
+        target_commitish: ${{ github.sha }}
+        name: Translation Tool v${{ steps.version.outputs.version }}
         body_path: RELEASE_NOTES.md
+        make_latest: true
         files: |
           ./publish_exe/TranslationProject.exe
           ./TranslationProject.zip

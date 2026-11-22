@@ -50,11 +50,14 @@ namespace TranslationProject
             _selectedLanguages = Languages.EssentialSet();
             InitializeComponent();
             AddEssentialsButton();
+            AddAboutButton();
+            AddCoffeeBox();
 
             _useCache = false;
             chkUseCacheGlobal.Checked = false;
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
-            string shortVersion = version != null ? $"{version.Major}.{version.Minor}" : "1.0";
+            string shortVersion = version == null ? "1.0" :
+                version.Build > 0 ? $"{version.Major}.{version.Minor}.{version.Build}" : $"{version.Major}.{version.Minor}";
             lblVersion.Text = $"Version {shortVersion} - Extract, Translate, Compile";
 
             _enigma2Manager = new Enigma2TranslationManager(Log, "translation_cache.json");
@@ -152,6 +155,96 @@ namespace TranslationProject
             };
             btn.Click += BtnEssentials_Click;
             panelEnigma2Mode.Controls.Add(btn);
+        }
+
+        private void AddAboutButton()
+        {
+            var btn = new Button
+            {
+                Name = "btnAbout",
+                Text = "About ☕",
+                Location = new Point(800, 536),
+                Size = new Size(100, 30),
+                BackColor = Color.Khaki,
+                UseVisualStyleBackColor = false
+            };
+            btn.Click += (_, _) => ShowAbout();
+            Controls.Add(btn);
+            btn.BringToFront();
+
+            // version and credits labels open it too
+            lblCredits.Cursor = Cursors.Hand;
+            lblCredits.Click += (_, _) => ShowAbout();
+            lblVersion.Cursor = Cursors.Hand;
+        }
+
+        /// <summary>
+        /// Always visible donation box in the free space of the header (between
+        /// the title and the logo): "Offer me a coffee" + PayPal and Ko-fi QR codes.
+        /// Anchored to the top, so it never covers buttons or the log.
+        /// </summary>
+        private void AddCoffeeBox()
+        {
+            const int qr = 70;
+            var box = new Panel
+            {
+                Name = "panelCoffee",
+                Location = new Point(448, 2),
+                Size = new Size(308, 84),
+                BackColor = Color.LightYellow,
+                BorderStyle = BorderStyle.FixedSingle,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+
+            box.Controls.Add(new Label
+            {
+                Text = "Do you like it?\r\nOffer me a coffee ☕\r\n\r\nScan or click a code.\r\nThank you! – Lululla",
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                ForeColor = Color.SaddleBrown,
+                Location = new Point(2, 2),
+                Size = new Size(150, 78)
+            });
+
+            var tip = new ToolTip();
+            void AddQr(string res, string caption, string url, int x)
+            {
+                var pic = new PictureBox
+                {
+                    Image = AboutForm.LoadImage(res),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Location = new Point(x, 1),
+                    Size = new Size(qr, qr),
+                    Cursor = Cursors.Hand,
+                    BackColor = Color.White
+                };
+                pic.Click += (_, _) => AboutForm.OpenUrl(url);
+                tip.SetToolTip(pic, caption + ": " + url);
+                box.Controls.Add(pic);
+
+                var link = new LinkLabel
+                {
+                    Text = caption,
+                    TextAlign = ContentAlignment.TopCenter,
+                    Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                    Location = new Point(x, qr + 1),
+                    Size = new Size(qr, 13)
+                };
+                link.LinkClicked += (_, _) => AboutForm.OpenUrl(url);
+                box.Controls.Add(link);
+            }
+
+            AddQr("qr_paypal.png", "PayPal", AboutForm.PayPalUrl, 156);
+            AddQr("qr_kofi.png", "Ko-fi", AboutForm.KofiUrl, 232);
+
+            Controls.Add(box);
+            box.BringToFront();
+        }
+
+        private void ShowAbout()
+        {
+            using var about = new AboutForm();
+            about.ShowDialog(this);
         }
 
         private void BtnEssentials_Click(object? sender, EventArgs e)
@@ -1811,7 +1904,7 @@ namespace TranslationProject
 
         private void lblVersion_Click(object sender, EventArgs e)
         {
-
+            ShowAbout();
         }
 
         private void lblPluginName_Click(object sender, EventArgs e)

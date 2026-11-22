@@ -15,8 +15,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <NeutralLanguage>en</NeutralLanguage>
-    <AssemblyVersion>2.9.1</AssemblyVersion>
-    <FileVersion>2.9.1</FileVersion>
+    <AssemblyVersion>2.9.2</AssemblyVersion>
+    <FileVersion>2.9.2</FileVersion>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -34,6 +34,8 @@
 
   <ItemGroup>
     <Content Include="app.ico" />
+    <EmbeddedResource Include="Resources\qr_paypal.png" />
+    <EmbeddedResource Include="Resources\qr_kofi.png" />
   </ItemGroup>
 
   <ItemGroup>

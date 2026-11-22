@@ -1,4 +1,4 @@
-# Translation Tool v2.9.1 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.9.2 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.9.1-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.9.2-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -215,6 +215,11 @@ Releases are built automatically by GitHub Actions: pushing a tag like `v2.8` bu
 ---
 
 ## 🔧 Changelog
+
+### Version 2.9.2 – 2026-11-22
+- **Added:** always visible **"Offer me a coffee ☕"** box at the top of the main window (between title and logo), with PayPal and Ko-fi QR codes (click a code to open the link).
+- **Added:** **About ☕** window (button next to *Clear Log*, or click the version/credits text): version, GitHub link and PayPal / Ko-fi QR codes to offer a coffee. The QR images are embedded in the exe.
+- **Changed:** the version label shows the third number too (e.g. 2.9.2).
 
 ### Version 2.9.1 – 2026-11-22
 - **Fixed:** strings with spaces at the start or end (`_("  Export Custom1 colors (OK)")`, `_("Directory creation error: ")`) were extracted without them, so the msgid did not match the text in the plugin and the translation was never shown. Python strings and `setup.xml` attributes are now extracted exactly as written.

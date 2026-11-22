@@ -148,6 +148,25 @@ namespace TranslationProject
             }
         }
 
+        /// <summary>
+        /// Google trims the text: give the translation the same leading and
+        /// trailing spaces/tabs as the source (" Export (OK)" -> " Esporta (OK)").
+        /// </summary>
+        public static string KeepOuterSpaces(string source, string translated)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(translated))
+                return translated;
+            char[] ws = { ' ', '\t' };
+            int lead = source.Length - source.TrimStart(ws).Length;
+            int trail = source.Length - source.TrimEnd(ws).Length;
+            if (lead == 0 && trail == 0)
+                return translated;
+            string core = translated.Trim(ws);
+            if (lead == source.Length)   // only spaces
+                return source;
+            return source.Substring(0, lead) + core + source.Substring(source.Length - trail);
+        }
+
         /// <summary>One request at a time, at least MinIntervalMs apart.</summary>
         private static async Task WaitTurnAsync(CancellationToken token)
         {

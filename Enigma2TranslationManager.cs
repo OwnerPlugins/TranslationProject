@@ -80,8 +80,11 @@ namespace TranslationProject
                     string content = File.ReadAllText(file, Encoding.UTF8);
                     foreach (Match m in PyCallRegex.Matches(content))
                     {
-                        string text = JoinPyLiterals(m.Groups[1].Value).Trim();
-                        if (!string.IsNullOrEmpty(text) && !text.StartsWith("#") && !text.StartsWith("/*"))
+                        // Keep leading/trailing spaces: the msgid must be exactly
+                        // the text passed to _() or gettext will not find it.
+                        string text = JoinPyLiterals(m.Groups[1].Value);
+                        string probe = text.Trim();
+                        if (probe.Length > 0 && !probe.StartsWith("#") && !probe.StartsWith("/*"))
                             strings.Add(text);
                     }
                 }
@@ -113,9 +116,10 @@ namespace TranslationProject
                     if (nodes == null) continue;
                     foreach (XmlNode node in nodes)
                     {
-                        string? value = node.Attributes?[attr]?.Value?.Trim();
-                        if (!string.IsNullOrEmpty(value) && !value.StartsWith("#") && !value.StartsWith("0x"))
-                            strings.Add(value);
+                        string? value = node.Attributes?[attr]?.Value;   // exact text, spaces included
+                        string probe = value?.Trim() ?? "";
+                        if (probe.Length > 0 && !probe.StartsWith("#") && !probe.StartsWith("0x"))
+                            strings.Add(value!);
                     }
                 }
             }
@@ -536,6 +540,8 @@ namespace TranslationProject
 
             translated = CleanWhitespace(translated);
             translated = RestoreEscapes(translated, escapeMap);
+            // Google drops leading/trailing spaces: put back the ones of the msgid
+            translated = GoogleTranslate.KeepOuterSpaces(text, translated);
 
             // Restore C# placeholders
             foreach (var kvp in csharpPlaceholders)

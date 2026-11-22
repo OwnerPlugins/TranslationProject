@@ -1,4 +1,4 @@
-# Translation Tool v2.9 – C# & Enigma2 Plugin Manager
+# Translation Tool v2.9.1 – C# & Enigma2 Plugin Manager
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Belfagor2005&label=Repository%20Views&color=blueviolet" alt="Views">
@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/OwnerPlugins/TranslationProject">
-    <img src="https://img.shields.io/badge/Version-2.9-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-2.9.1-blue.svg" alt="Version">
   </a>
   <a href="https://www.gnu.org/licenses/gpl-3.0.html">
     <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License">
@@ -215,6 +215,10 @@ Releases are built automatically by GitHub Actions: pushing a tag like `v2.8` bu
 ---
 
 ## 🔧 Changelog
+
+### Version 2.9.1 – 2026-11-22
+- **Fixed:** strings with spaces at the start or end (`_("  Export Custom1 colors (OK)")`, `_("Directory creation error: ")`) were extracted without them, so the msgid did not match the text in the plugin and the translation was never shown. Python strings and `setup.xml` attributes are now extracted exactly as written.
+- **Fixed:** the translation keeps the same leading/trailing spaces as the original (Google removes them).
 
 ### Version 2.9 – 2026-11-20
 - **Fixed:** Google "429 Too Many Requests": one request at a time with a pause between requests; when Google blocks, the program waits (30 s → 1 min → 2 min → 5 min) and retries the same string; if it keeps blocking, it stops for 15 minutes and leaves the remaining strings empty for the next run.

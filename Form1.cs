@@ -1780,6 +1780,7 @@ namespace TranslationProject
                 translated = translated.Replace(kvp.Key, kvp.Value);
             foreach (var kvp in pythonPlaceholders)
                 translated = translated.Replace(kvp.Key, kvp.Value);
+            translated = GoogleTranslate.KeepOuterSpaces(text, translated);
 
             if (_useCache)
             {
